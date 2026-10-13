@@ -29,7 +29,8 @@ area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
   relation["natural"="water"]["name"](area.bb);
   way["waterway"~"^(river|canal)$"]["name"](area.bb);
   // Border rivers lie on the state boundary, so the area filter misses them: add them by bounding box.
-  way["waterway"="river"]["name"~"Oder|Odra|Neiße|Nysa"](51.25,14.0,53.33,14.95);
+  way["waterway"="river"]["name"~"Oder|Odra"](52.05,14.0,53.33,14.95);
+  way["waterway"="river"]["name"~"Neiße|Nysa"](51.25,14.4,52.1,14.95);
   way["waterway"="river"]["name"~"Elbe|Łaba"](52.85,11.2,53.35,12.0);
   way["waterway"="river"]["name"~"Elbe"](51.35,13.05,51.55,13.35);
   node["place"~"^(city|town|village)$"]["name"](area.bb);
@@ -132,6 +133,8 @@ export function waterName(tags) {
   if (/^(Oder|Odra)(\s*[-/–]\s*(Oder|Odra))?$/i.test(raw)) return 'Oder';
   if (/^((Lausitzer\s+)?Neiße|Nysa\s+Łużycka)(\s*[-/–]\s*.*)?$/i.test(raw)) return 'Neiße';
   if (/^(Elbe|Łaba|Labe)(\s*[-/–]\s*.*)?$/i.test(raw)) return 'Elbe';
+  // Waters on the Polish side picked up by the border-river boxes have only Polish names: skip them.
+  if (!tags?.['name:de'] && /[łśżźćńąę]/i.test(raw) && !/[äöüß]/i.test(raw)) return '';
   return raw;
 }
 
@@ -169,7 +172,7 @@ export function buildWaters(osm) {
 
   const places = els
     .filter((e) => e.type === 'node' && e.tags?.place && e.tags?.name)
-    .map((n) => ({ name: n.tags.name, rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
+    .map((n) => ({ name: regionName(n.tags), rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
   const nearestPlace = (pt, minRank = 1, exclude = new Set()) => {
     const f = toXY(pt[1]);
     const p = f(pt);
@@ -290,6 +293,12 @@ export function buildWaters(osm) {
   const counts = new Map();
   for (const w of out) counts.set(w.name, (counts.get(w.name) ?? 0) + 1);
   for (const w of out) if (counts.get(w.name) > 1) w.name = `${w.name} (${w.region})`;
+  const seen = new Map();
+  for (const w of out) {
+    const n = (seen.get(w.name) ?? 0) + 1;
+    seen.set(w.name, n);
+    if (n > 1) w.name = `${w.name} ${n}`;
+  }
 
   // Stable ids from the final names.
   const usedIds = new Set();
