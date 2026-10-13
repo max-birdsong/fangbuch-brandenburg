@@ -155,14 +155,14 @@ export async function patchSurvey(surveyId: string, fn: (r: SurveyResponse) => S
 }
 
 /** Saves a fishing day's catch list: one record per fish (old records are marked deleted). */
-export async function replaceCatches(tripId: string, fish: { species: string; kept: boolean; lengthCm: number | null }[]) {
+export async function replaceCatches(tripId: string, fish: { species: string; count: number; kept: boolean; lengthCm: number | null }[]) {
   await db.transaction('rw', db.catches, async () => {
     const now = Date.now();
     const old = (await db.catches.where('tripId').equals(tripId).toArray()).filter((c) => !c.deleted);
     for (const c of old) await db.catches.update(c.id, { deleted: true, dirty: 1, updatedAt: now });
     // updatedAt + index keeps the angler's order when the day is opened again.
     for (const [i, f] of fish.entries()) {
-      await db.catches.put({ id: uuid(), tripId, species: f.species, count: 1, lengthCm: f.lengthCm, kept: f.kept, caughtAt: null, deleted: false, dirty: 1, updatedAt: now + i });
+      await db.catches.put({ id: uuid(), tripId, species: f.species, count: f.count, lengthCm: f.count > 1 ? null : f.lengthCm, kept: f.kept, caughtAt: null, deleted: false, dirty: 1, updatedAt: now + i });
     }
   });
 }
