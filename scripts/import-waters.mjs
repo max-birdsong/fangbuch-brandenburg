@@ -187,6 +187,20 @@ export function buildWaters(osm) {
   };
   const metres = (a, b) => { const f = toXY(a[1]); return dist(f(a), f(b)); };
 
+  // Is a point in Brandenburg or within ~1 km of it? Used to clip border rivers to the Brandenburg side.
+  const vertices = counties.flatMap((c) => c.rings.flatMap((r) => r.filter((_, i) => i % 3 === 0)));
+  const nearBB = (pt) => {
+    if (counties.some((c) => c.rings.some((ring) => pointInRing(pt, ring)))) return true;
+    const f = toXY(pt[1]);
+    const p = f(pt);
+    for (const v of vertices) {
+      if (Math.abs(v[1] - pt[1]) > 0.02 || Math.abs(v[0] - pt[0]) > 0.03) continue;
+      if (dist(p, f(v)) < 1000) return true;
+    }
+    return false;
+  };
+  const BORDER = new Set(['Oder', 'Neiße', 'Elbe']);
+
   // Rivers and canals: group ways by (type, name).
   const byName = new Map();
   for (const e of els) {
@@ -195,7 +209,18 @@ export function buildWaters(osm) {
     if (!name) continue;
     const k = `${e.tags.waterway}|${name}`;
     if (!byName.has(k)) byName.set(k, []);
-    byName.get(k).push(geomOf(e.geometry));
+    const coords = geomOf(e.geometry);
+    if (BORDER.has(name) && counties.length) {
+      // Keep only the runs of points on the Brandenburg side.
+      let run = [];
+      for (const pt of coords) {
+        if (nearBB(pt)) run.push(pt);
+        else { if (run.length > 1) byName.get(k).push(run); run = []; }
+      }
+      if (run.length > 1) byName.get(k).push(run);
+    } else if (coords.length > 1) {
+      byName.get(k).push(coords);
+    }
   }
   const lineNames = new Set([...byName.keys()].map((k) => k.split('|')[1]));
 
