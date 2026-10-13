@@ -37,7 +37,7 @@ export interface AProfile {
   yearsFishing: number | null;
 }
 export interface AdminData {
-  source: 'all' | 'own';
+  source: 'all' | 'own' | 'example';
   trips: ATrip[];
   catches: ACatch[];
   surveys: ASurvey[];

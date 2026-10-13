@@ -311,3 +311,5 @@ a.tile { display: flex; align-items: center; justify-content: center; text-decor
 .length-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
 .length-input { width: 96px; }
 .length-input input { min-height: 44px; }
+.source-note.example { background: #EEE9FB; color: #4B3A9E; }
+.check.small { font-size: 14px; min-height: 44px; }
