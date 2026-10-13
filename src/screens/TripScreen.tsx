@@ -1,13 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { go, useConfirm, useLang } from '../app';
 import { CatchRow } from '../components/CatchRow';
 import { TopBar } from '../components/ui';
 import { Satisfaction } from '../components/Satisfaction';
-import { METHODS, PLATFORMS, TARGETS, label } from '../data/catalog';
-import { deleteTrip, updateTrip } from '../lib/db';
+import { METHODS, PLATFORMS, QUICK_SPECIES, SPECIES, TARGETS, label } from '../data/catalog';
+import { StaleTripPrompt, useIsStale } from '../components/StaleTripPrompt';
+import { deleteCatch, deleteTrip, saveCatch, updateTrip } from '../lib/db';
 import { useCatches, useKV, useTrip } from '../lib/hooks';
 import { scheduleSync } from '../lib/sync';
-import { fmtDate, fmtTime } from '../lib/util';
+import { fmtDate, fmtTime, uuid } from '../lib/util';
 
 export function TripScreen({ id }: { id: string }) {
   const { t, lang } = useLang();
@@ -16,6 +17,9 @@ export function TripScreen({ id }: { id: string }) {
   const catches = useCatches(id);
   const openBackfill = useKV<string | null>('openBackfill', null);
   const gone = trip === null || !!trip?.deleted;
+  const stale = useIsStale(trip);
+  const [toast, setToast] = useState<{ id: string; text: string } | null>(null);
+  const toastTimer = useRef<number>();
   useEffect(() => {
     if (gone) go('', true);
   }, [gone]);
@@ -30,7 +34,23 @@ export function TripScreen({ id }: { id: string }) {
   const end = async () => {
     if (running) await updateTrip(id, { endedAt: new Date().toISOString() });
     scheduleSync();
-    go(`trip/${id}/summary`, true);
+    go(`trip/${id}/report`, true);
+  };
+
+  // One tap = one released fish of that species, with an undo.
+  const quickSpecies = [...new Set([...trip.targets.filter((c) => SPECIES.some((x) => x.code === c)), ...QUICK_SPECIES])].slice(0, 8);
+  const quickLog = async (species: string) => {
+    const cid = uuid();
+    await saveCatch({ id: cid, tripId: id, species, count: 1, lengthCm: null, kept: false, caughtAt: new Date().toISOString(), deleted: false });
+    scheduleSync(5000);
+    window.clearTimeout(toastTimer.current);
+    setToast({ id: cid, text: t('quickSaved', { species: label(SPECIES, species, lang) }) });
+    toastTimer.current = window.setTimeout(() => setToast(null), 5000);
+  };
+  const undo = async () => {
+    if (!toast) return;
+    await deleteCatch(toast.id);
+    setToast(null);
   };
 
   const remove = async () => {
@@ -55,6 +75,20 @@ export function TripScreen({ id }: { id: string }) {
       </header>
 
       <div className="content stack">
+        {stale && <StaleTripPrompt trip={trip} />}
+        {running && !stale && (
+          <section className="field" aria-labelledby="quick-title">
+            <h3 id="quick-title" className="section-title">{t('quickTitle')}</h3>
+            <p className="hint">{t('quickHint')}</p>
+            <div className="tiles">
+              {quickSpecies.map((c) => (
+                <button key={c} type="button" className="tile" onClick={() => void quickLog(c)}>{label(SPECIES, c, lang)}</button>
+              ))}
+              <a className="tile more" href={`#/trip/${id}/catch`}>{t('otherShort')}</a>
+            </div>
+            <a className="link-btn" href={`#/trip/${id}/catch`}>{t('withDetails')}</a>
+          </section>
+        )}
         <div className="row between baseline">
           <h3 className="section-title">{t('todaysCatches')}</h3>
           <span className="strong muted">{total}</span>
@@ -78,12 +112,23 @@ export function TripScreen({ id }: { id: string }) {
         )}
       </div>
 
-      <footer className="actionbar stack-sm">
-        <a className="btn accent big" href={`#/trip/${id}/catch`}>{running || fresh ? t('addCatch') : t('addCatchLater')}</a>
-        {(running || fresh) && (
-          <button className="btn secondary" onClick={() => void end()}>{running ? t('endTrip') : t('finishBackfill')}</button>
-        )}
-      </footer>
+      {toast && (
+        <div className="toast" role="status">
+          <span>{toast.text}</span>
+          <button className="toast-btn" onClick={() => void undo()}>{t('undo')}</button>
+        </div>
+      )}
+      {!stale && (
+        <footer className="actionbar stack-sm">
+          {running ? (
+            <button className="btn accent big" onClick={() => void end()}>{t('endTrip')}</button>
+          ) : fresh ? (
+            <button className="btn accent big" onClick={() => void end()}>{t('finishBackfill')}</button>
+          ) : (
+            <a className="btn secondary" href={`#/trip/${id}/catch`}>{t('addCatchLater')}</a>
+          )}
+        </footer>
+      )}
     </main>
   );
 }
