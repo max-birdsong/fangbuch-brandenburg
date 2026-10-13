@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { go, useConfirm, useLang } from '../app';
 import { Chips, Field, TopBar } from '../components/ui';
 import { Satisfaction } from '../components/Satisfaction';
-import { FishRow, type FishDraft } from '../components/FishRow';
+import { FishSheet, fishLine, parseCm, type FishDraft } from '../components/FishSheet';
 import { WaterPicker, type WaterValue } from '../components/WaterPicker';
 import { METHODS, PLATFORMS, QUICK_SPECIES, SPECIES, TARGETS, label } from '../data/catalog';
 import { db, deleteTrip, rememberWater, replaceCatches, saveTrip, type Trip } from '../lib/db';
@@ -29,7 +29,7 @@ export function TripForm({ id }: { id?: string }) {
   const [platform, setPlatform] = useState<string | null>(null);
   const [targets, setTargets] = useState<string[]>([]);
   const [fish, setFish] = useState<FishDraft[]>([]);
-  const [showMissing, setShowMissing] = useState(false);
+  const [sheet, setSheet] = useState<{ fish: FishDraft | null } | null>(null);
   const [satisfaction, setSatisfaction] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,7 +54,7 @@ export function TripForm({ id }: { id?: string }) {
       // One row per fish (older entries may hold several fish in one record).
       const rows: FishDraft[] = [];
       for (const c of cs.sort((a, b) => a.updatedAt - b.updatedAt)) {
-        for (let i = 0; i < c.count; i++) rows.push({ key: uuid(), species: c.species, cm: c.lengthCm === null ? '' : String(c.lengthCm), kept: c.kept });
+        for (let i = 0; i < c.count; i++) rows.push({ key: uuid(), species: c.species, cm: c.lengthCm === null ? '' : String(c.lengthCm).replace('.', lang === 'de' ? ',' : '.'), kept: c.kept });
       }
       setFish(rows);
       setLoaded(true);
@@ -65,19 +65,19 @@ export function TripForm({ id }: { id?: string }) {
     const tg = targets.filter((c) => SPECIES.some((s) => s.code === c));
     return [...new Set([...tg, ...QUICK_SPECIES])].slice(0, 9);
   }, [targets]);
-  const others = useMemo(() => SPECIES.filter((s) => !suggestions.includes(s.code)), [suggestions]);
 
   if (!loaded) return <main className="screen" />;
 
-  // Catch list: one row per fish.
-  const addFish = (species: string) => setFish((fs) => [...fs, { key: uuid(), species, cm: '', kept: null }]);
-  const setOne = (key: string, f: FishDraft) => setFish((fs) => fs.map((x) => (x.key === key ? f : x)));
-  const copyFish = (key: string) =>
-    setFish((fs) => {
-      const i = fs.findIndex((x) => x.key === key);
-      return [...fs.slice(0, i + 1), { ...fs[i], key: uuid(), cm: '' }, ...fs.slice(i + 1)];
-    });
-  const parseCm = (v: string) => (v.trim() === '' ? null : Number(v.replace(',', '.')));
+  // Catch list: one line per fish, added and edited in a small sheet.
+  const saveFish = (f: Omit<FishDraft, 'key'>) => {
+    const editing = sheet?.fish;
+    setFish((fs) => (editing ? fs.map((x) => (x.key === editing.key ? { ...f, key: x.key } : x)) : [...fs, { ...f, key: uuid() }]));
+    setSheet(null);
+  };
+  const removeFish = (key: string) => {
+    setFish((fs) => fs.filter((x) => x.key !== key));
+    setSheet(null);
+  };
   const total = fish.length;
   const toggleTarget = (c: string) => setTargets((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]));
 
@@ -87,11 +87,6 @@ export function TripForm({ id }: { id?: string }) {
     let endedAt = fromInputs(date, to);
     if (endedAt <= startedAt) endedAt = new Date(new Date(endedAt).getTime() + 86_400_000).toISOString(); // past midnight
     if (new Date(startedAt).getTime() > Date.now() + 60_000) return setErr(t('futureTime'));
-    if (fish.some((f) => f.kept === null)) {
-      setShowMissing(true);
-      return setErr(t('fateMissing'));
-    }
-    if (fish.some((f) => { const n = parseCm(f.cm); return n !== null && !(n > 0 && n < 400); })) return setErr(t('lengthInvalid'));
     setErr(null);
     setBusy(true);
     const tripId = id ?? uuid();
@@ -161,31 +156,18 @@ export function TripForm({ id }: { id?: string }) {
         </Field>
 
         <Field label={t('catchesQ')} hint={t('catchesHint')}>
-          {fish.map((f, i) => (
-            <FishRow
-              key={f.key}
-              fish={f}
-              index={i + 1}
-              name={label(SPECIES, f.species, lang)}
-              showMissing={showMissing}
-              onChange={(nf) => setOne(f.key, nf)}
-              onCopy={() => copyFish(f.key)}
-              onRemove={() => setFish((fs) => fs.filter((x) => x.key !== f.key))}
-            />
-          ))}
-          <div className="chips">
-            {suggestions.map((c) => (
-              <button key={c} type="button" className="chip" onClick={() => addFish(c)}>+ {label(SPECIES, c, lang)}</button>
-            ))}
-          </div>
-          {others.length > 0 && (
-            <select aria-label={t('chooseSpecies')} value="" onChange={(e) => e.target.value && addFish(e.target.value)}>
-              <option value="">{t('chooseSpecies')}</option>
-              {others.map((s) => (
-                <option key={s.code} value={s.code}>{s[lang]}</option>
+          {fish.length > 0 && (
+            <ol className="fish-list">
+              {fish.map((f) => (
+                <li key={f.key}>
+                  <button type="button" className="fish-line" onClick={() => setSheet({ fish: f })}>
+                    {fishLine(f, label(SPECIES, f.species, lang), f.kept ? t('kept') : t('released'), lang)}
+                  </button>
+                </li>
               ))}
-            </select>
+            </ol>
           )}
+          <button type="button" className="btn secondary" onClick={() => setSheet({ fish: null })}>{t('addFish')}</button>
         </Field>
 
         <Field label={t('satQ')}>
@@ -200,6 +182,15 @@ export function TripForm({ id }: { id?: string }) {
           {total === 0 ? t('saveNoCatch') : t('saveWithFish', { n: total })}
         </button>
       </footer>
+      {sheet && (
+        <FishSheet
+          fish={sheet.fish}
+          suggestions={suggestions}
+          onSave={saveFish}
+          onDelete={sheet.fish ? () => removeFish(sheet.fish!.key) : undefined}
+          onClose={() => setSheet(null)}
+        />
+      )}
     </main>
   );
 }
