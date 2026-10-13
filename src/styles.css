@@ -234,3 +234,18 @@ input.invalid { border-color: var(--danger); }
 @media (min-width: 600px) {
   #root { box-shadow: 0 0 0 1px var(--line); }
 }
+
+/* Survey */
+.h2 { font-size: 24px; font-weight: 800; line-height: 1.15; }
+.right { text-align: right; }
+.progress { height: 5px; background: var(--line); }
+.progress span { display: block; height: 100%; background: var(--teal); transition: width 0.2s; }
+.question { display: flex; flex-direction: column; gap: 10px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.question:last-child { border-bottom: 0; }
+.q-text { font-size: 17px; font-weight: 700; line-height: 1.35; }
+.likert { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.likert-btn { padding: 0; font-size: 18px; font-weight: 800; border-radius: 12px; min-height: 50px; }
+.likert-ends { align-items: flex-start; }
+.likert-ends span { max-width: 45%; }
+.num-input { max-width: 140px; }
+.survey-card { border: 2px solid var(--accent); }

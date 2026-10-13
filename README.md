@@ -7,11 +7,12 @@ Status: **proof of concept / pilot**. Licensed to IfB, all rights reserved.
 ## What it does
 
 - Installable web app (PWA): works on any phone from the browser, can be added to the home screen, **works offline** at the water and syncs later.
-- No login needed to start. Anglers can later secure their log with an email address (6-digit code, no password), which also lets them restore it on a new phone and enter the prize draw.
+- No login needed to start. Anglers can later secure their log with an email address (6-digit code, no password), which also lets them restore it on a new phone.
 - One-time profile: years fishing, home postcode (no address), club membership and club name, Fischereischein, licenses.
 - Fishing day ("Angeltag"): water body, method, shore/boat/wading, target species. Log live, or add a past day afterwards.
 - Catches: species, number, length (or "not measured"), kept or released.
 - Satisfaction (1 to 5) at the end of each day.
+- Optional baseline survey (age, avidity, skill, centrality/attraction, motivations, catch orientation, Oder questions), offered after the first fishing day. Answers save as you go and can be resumed.
 - Water picker: nearest water via GPS (computed on the phone, coordinates are never stored), recently visited, search, by region, or free text.
 - German and English. Polish can be added in `src/i18n.ts`.
 - Anglers can download their own data (CSV) and delete their account with all data.
@@ -49,9 +50,24 @@ In the Supabase dashboard, SQL Editor:
 ```sql
 select * from export_trips;    -- one row per fishing day, with fish counts and angler profile
 select * from export_catches;  -- one row per catch entry
+select * from export_survey_long;  -- survey answers, see below
 ```
 
 Then "Download CSV". `user_id` is a pseudonymous ID; names and emails are never part of the exports. Deleted entries are excluded.
+
+## Survey
+
+Questions live in `src/data/survey.ts`, one plain file with DE/EN wording, scale definitions and literature references. Edit wording there; give an item a new `id` and bump `version` if you change what it measures.
+
+The item wordings are reconstructed from the cited scales and the German versions are drafts. **Check them against the original publications before fielding.**
+
+Export (long format, one row per angler and item):
+
+```sql
+select * from export_survey_long;
+```
+
+Scale answers are stored 1 to 5 as answered; items marked `reverse` in the survey file still need reverse-coding in analysis.
 
 ## Water bodies
 
@@ -94,6 +110,7 @@ scripts/              water import (OSM), starter list, icon generation
 ## Open questions for IfB
 
 - Review species list, methods and license types (`src/data/catalog.ts`).
+- Check survey item wording against the original scales (`src/data/survey.ts`).
 - Minimum age and consent for under-16s (DSB).
 - Spatial units for the Oder and other large rivers.
 - Hosting long term (Supabase vs. IfB server) and domain.

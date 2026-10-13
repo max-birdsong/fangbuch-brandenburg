@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, getKV, type Catch, type Profile, type Trip } from './db';
+import { db, getKV, surveyKey, type Catch, type Profile, type SurveyResponse, type Trip } from './db';
+import { SURVEY } from '../data/survey';
 import { subscribeSync, type SyncState } from './sync';
 import { loadWaters, type WatersFile } from './waters';
 
@@ -26,13 +27,17 @@ export const useKV = <T,>(key: string, fallback: T) => useLiveQuery(() => getKV<
 
 export const usePending = () =>
   useLiveQuery(async () => {
-    const [t, c, p] = await Promise.all([
+    const [t, c, p, s] = await Promise.all([
       db.trips.where('dirty').equals(1).count(),
       db.catches.where('dirty').equals(1).count(),
-      getKV<Profile | null>('profile', null)
+      getKV<Profile | null>('profile', null),
+      getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null)
     ]);
-    return t + c + (p?.dirty ? 1 : 0);
+    return t + c + (p?.dirty ? 1 : 0) + (s?.dirty ? 1 : 0);
   }, [], 0);
+
+export const useSurvey = () =>
+  useLiveQuery(() => getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null), [], undefined as SurveyResponse | null | undefined);
 
 export function useSyncState() {
   const [s, setS] = useState<SyncState>({ running: false, lastOk: null, lastError: null });
