@@ -3,6 +3,7 @@ import { BottomNav } from '../components/ui';
 import { TripCard } from '../components/TripCard';
 import { useCatches, useKV, usePending, useSurvey, useSyncState, useTrips, summarize } from '../lib/hooks';
 import { SURVEY } from '../data/survey';
+import { StaleTripPrompt, useIsStale } from '../components/StaleTripPrompt';
 import { setKV } from '../lib/db';
 import { isDemo } from '../lib/supabase';
 import { fmtTime } from '../lib/util';
@@ -15,12 +16,14 @@ export function Home() {
   const sync = useSyncState();
   const survey = useSurvey();
   const snoozedUntil = useKV<number>('surveySnoozedUntil', 0);
+  const staleActive = useIsStale(trips?.find((tr) => !tr.endedAt && tr.loggedLive));
   if (!trips || !catches || survey === undefined) return <main className="screen" />;
 
   const year = new Date().getFullYear();
   const seasonTrips = trips.filter((tr) => new Date(tr.startedAt).getFullYear() === year && tr.endedAt);
   const s = summarize(seasonTrips, catches);
   const active = trips.find((tr) => !tr.endedAt && tr.loggedLive);
+  const stale = staleActive;
   const recent = trips.filter((tr) => tr.endedAt).slice(0, 8);
   const byTrip = (id: string) => catches.filter((c) => c.tripId === id);
   // Offer the optional survey after the first finished fishing day; "Later" hides it for 3 days.
@@ -42,7 +45,9 @@ export function Home() {
       </header>
 
       <div className="content stack">
-        {active ? (
+        {active && stale ? (
+          <StaleTripPrompt trip={active} />
+        ) : active ? (
           <a className="btn accent big banner" href={`#/trip/${active.id}`}>
             <span className="stack-xs left">
               <span className="small">{t('tripRunning', { time: fmtTime(active.startedAt, lang) })}</span>

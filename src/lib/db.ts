@@ -2,6 +2,7 @@
 // synced to Supabase in the background (see sync.ts). `dirty = 1` marks rows not yet uploaded.
 import Dexie, { type Table } from 'dexie';
 import type { Lang } from '../data/catalog';
+import { uuid } from './util';
 
 export type WaterChoice = 'gps' | 'recent' | 'search' | 'manual' | 'other';
 
@@ -150,5 +151,41 @@ export async function patchSurvey(surveyId: string, fn: (r: SurveyResponse) => S
     if (!cur) return;
     const next = fn(cur.value as SurveyResponse);
     await db.kv.put({ key: surveyKey(surveyId), value: { ...next, dirty: 1, updatedAt: Date.now() } });
+  });
+}
+
+/**
+ * End-of-trip report: set the number of fish per species x kept/released for a trip.
+ * Existing entries are kept where possible: extra fish become a new entry without length;
+ * fewer fish are taken from entries without a length first, so measured fish survive.
+ */
+export async function applyReport(tripId: string, target: { species: string; kept: boolean; count: number }[], caughtAt: string | null) {
+  await db.transaction('rw', db.catches, async () => {
+    const rows = (await db.catches.where('tripId').equals(tripId).toArray()).filter((c) => !c.deleted);
+    const now = Date.now();
+    const key = (sp: string, kept: boolean) => `${sp}|${kept ? 1 : 0}`;
+    const want = new Map(target.map((t) => [key(t.species, t.kept), t.count]));
+    const groups = new Map<string, Catch[]>();
+    for (const r of rows) groups.set(key(r.species, r.kept), [...(groups.get(key(r.species, r.kept)) ?? []), r]);
+    for (const k of new Set([...want.keys(), ...groups.keys()])) {
+      const [species, keptFlag] = k.split('|');
+      const kept = keptFlag === '1';
+      const have = groups.get(k) ?? [];
+      let diff = (want.get(k) ?? 0) - have.reduce((s, r) => s + r.count, 0);
+      if (diff > 0) {
+        await db.catches.put({ id: uuid(), tripId, species, count: diff, lengthCm: null, kept, caughtAt, deleted: false, dirty: 1, updatedAt: now });
+      } else if (diff < 0) {
+        const order = [...have].sort(
+          (a, b) => Number(a.lengthCm !== null) - Number(b.lengthCm !== null) || (b.caughtAt ?? '').localeCompare(a.caughtAt ?? '')
+        );
+        for (const r of order) {
+          if (diff === 0) break;
+          const take = Math.min(r.count, -diff);
+          diff += take;
+          if (take === r.count) await db.catches.update(r.id, { deleted: true, dirty: 1, updatedAt: now });
+          else await db.catches.update(r.id, { count: r.count - take, dirty: 1, updatedAt: now });
+        }
+      }
+    }
   });
 }
