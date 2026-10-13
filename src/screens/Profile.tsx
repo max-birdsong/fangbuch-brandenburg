@@ -121,6 +121,7 @@ export function Profile() {
 
         <button className="btn secondary" onClick={() => void exportCsv()}>{t('exportData')}</button>
         <a className="btn secondary" href="#/privacy">{t('privacy')}</a>
+        <a className="btn secondary" href="#/admin">{t('dashboard')}</a>
 
         <div className="card stack-xs">
           <span className="strong">{t('about')}</span>

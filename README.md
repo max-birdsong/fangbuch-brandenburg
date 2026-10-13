@@ -55,6 +55,17 @@ select * from export_survey_long;  -- survey answers, see below
 
 Then "Download CSV". `user_id` is a pseudonymous ID; names and emails are never part of the exports. Deleted entries are excluded.
 
+## Dashboard
+
+The app has a research dashboard at `#/admin` (Profile > Auswertung): key figures, fishing days per week, fish per angler-hour by water, catch by species (kept/released), survey scale means and motivations, and CSV downloads.
+
+- Everyone can open it, but it only shows **this device's** data unless the account is an admin.
+- To see all anglers: secure your account with your email in the app (Profile > Mit E-Mail sichern), then in the Supabase SQL Editor run
+  ```sql
+  insert into public.admins (user_id) select id from auth.users where email = 'you@example.org';
+  ```
+  and sign in on the device with that email. Admins can read all data but cannot change it.
+
 ## Survey
 
 Questions live in `src/data/survey.ts`, one plain file with DE/EN wording, scale definitions and literature references. Edit wording there; give an item a new `id` and bump `version` if you change what it measures.
