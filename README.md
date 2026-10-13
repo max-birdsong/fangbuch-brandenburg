@@ -34,7 +34,7 @@ Open the printed URL. Without Supabase settings the app runs in **demo mode**: e
 2. SQL Editor: paste and run `supabase/schema.sql` (tables, access rules, export views).
 3. Authentication > Sign In / Providers: enable **Allow anonymous sign-ins** and **Email**.
 4. Authentication > Emails > Templates: in "Magic Link" and "Change Email Address", include the code `{{ .Token }}` in the text (the app asks for the 6-digit code, not a link).
-5. Copy `.env.example` to `.env` and fill in Project URL and anon key (Project Settings > API).
+5. Put the Project URL and publishable (anon) key in `.env.production` (used by the deployed app) and, for local testing against the database, in `.env` (copy `.env.example`).
 6. `npm run dev` again. The home screen shows "All entries backed up" once sync works.
 
 Before a real pilot:
@@ -87,7 +87,7 @@ This calls the public Overpass API and takes a few minutes. Review the result be
 Any static host works (`npm run build` produces `dist/`). Free options:
 
 - **Cloudflare Pages / Netlify**: connect the repo, build command `npm run build`, output `dist`, set the two `VITE_SUPABASE_*` variables.
-- **GitHub Pages**: the included workflow `.github/workflows/deploy.yml` builds and publishes on every push to `main` (public repo, or a paid plan for private ones). Add the two variables under Settings > Secrets and variables > Actions > Variables, and set Pages source to "GitHub Actions".
+- **GitHub Pages**: the included workflow `.github/workflows/deploy.yml` builds and publishes on every push to `main` (public repo, or a paid plan for private ones), using the Supabase settings in `.env.production`. Set Pages source to "GitHub Actions".
 
 The app must be served over HTTPS for GPS and offline mode (all of the above do this).
 
