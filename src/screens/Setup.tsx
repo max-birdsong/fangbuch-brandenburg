@@ -64,7 +64,7 @@ export function Setup() {
     await setKV('lastSetup', { method, platform, targets } satisfies LastSetup);
     await setKV('openBackfill', past ? id : null);
     scheduleSync();
-    go(`trip/${id}`, true);
+    go(past ? `trip/${id}/report` : `trip/${id}`, true);
   };
 
   return (
