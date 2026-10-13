@@ -313,3 +313,11 @@ a.tile { display: flex; align-items: center; justify-content: center; text-decor
 .length-input input { min-height: 44px; }
 .source-note.example { background: #EEE9FB; color: #4B3A9E; }
 .check.small { font-size: 14px; min-height: 44px; }
+
+/* One row per fish */
+.fish-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 6px 12px 14px; }
+.fish-row.missing { border: 2px solid var(--danger); }
+.fish-fields { display: flex; align-items: center; gap: 8px; padding-right: 8px; }
+input.fish-len { width: 92px; flex: none; padding: 0 10px; font-size: 15px; }
+.chips.fate { flex-wrap: nowrap; gap: 6px; }
+.chips.fate .chip { padding: 0 11px; font-size: 14px; }
