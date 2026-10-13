@@ -24,12 +24,15 @@ const AREA = 'area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;';
 const QUERIES = {
   lakes: `[out:json][timeout:300];${AREA}(way["natural"="water"]["name"](area.bb);relation["natural"="water"]["name"](area.bb););out geom;`,
   rivers: `[out:json][timeout:300];${AREA}way["waterway"~"^(river|canal)$"]["name"](area.bb);out geom;`,
-  places: `[out:json][timeout:120];${AREA}node["place"~"^(city|town|village)$"]["name"](area.bb);out;`,
-  counties: `[out:json][timeout:300];${AREA}relation["boundary"="administrative"]["admin_level"="6"](area.bb);out geom;`
+  places: `[out:json][timeout:120];${AREA}node["place"~"^(city|town|village)$"]["name"](area.bb);out;`
 };
+// Counties: county outlines are too heavy to download, so instead ask per county which waters lie in it.
+const COUNTY_LIST = `[out:json][timeout:120];${AREA}relation["boundary"="administrative"]["admin_level"="6"](area.bb);out tags;`;
+const countyMembersQuery = (relId) =>
+  `[out:json][timeout:240];area(${3600000000 + relId})->.c;(way["natural"="water"]["name"](area.c);relation["natural"="water"]["name"](area.c);way["waterway"~"^(river|canal)$"]["name"](area.c););out ids;`;
 const ENDPOINTS = [ENDPOINT, 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
 
-async function overpass(name, query) {
+async function overpass(name, query, allowEmpty = false) {
   for (let attempt = 0; attempt < 6; attempt++) {
     const url = ENDPOINTS[attempt % ENDPOINTS.length];
     const t0 = Date.now();
@@ -43,6 +46,7 @@ async function overpass(name, query) {
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 200).replace(/\s+/g, ' ')}`);
       const json = JSON.parse(text);
       if (json.remark && /error|timed out|runtime/i.test(json.remark)) throw new Error(`Overpass remark: ${json.remark}`);
+      if (!allowEmpty && !json.elements?.length) throw new Error(`empty result${json.remark ? ` (${json.remark})` : ''}`);
       console.log(`  ${name}: ${json.elements.length} elements from ${url} in ${((Date.now() - t0) / 1000).toFixed(0)} s (${(text.length / 1e6).toFixed(1)} MB)`);
       return json.elements;
     } catch (e) {
@@ -136,8 +140,13 @@ function joinChains(pieces) {
 
 const geomOf = (g) => (g ?? []).map((p) => [p.lon, p.lat]);
 // Prefer the German name (OSM often has bilingual names like "Oder/Odra" or "Cottbus - Chóśebuz").
-const key2 = ([lon, lat]) => `${lon.toFixed(6)},${lat.toFixed(6)}`;
-const nameOf = (tags) => (tags['name:de'] || tags.name || '').trim();
+const nameOf = (tags) => {
+  if (tags['name:de']) return tags['name:de'].trim();
+  const n = (tags.name || '').trim();
+  // "Oder/Odra", "Lausitzer Neiße / Nysa Łużycka": keep the German part when a Polish name exists.
+  if (tags['name:pl'] && n.includes('/')) return n.split('/')[0].trim();
+  return n;
+};
 const slug = (s) => s.toLowerCase()
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -146,17 +155,9 @@ const slug = (s) => s.toLowerCase()
 export function buildWaters(osm) {
   const els = osm.elements ?? [];
 
-  // Counties (Landkreise / kreisfreie Städte) as regions.
-  const counties = els
-    .filter((e) => e.type === 'relation' && e.tags?.boundary === 'administrative' && e.tags?.admin_level === '6')
-    .map((r) => ({
-      name: nameOf(r.tags),
-      rings: joinChains((r.members ?? []).filter((m) => m.role === 'outer' && m.geometry).map((m) => geomOf(m.geometry)))
-        .filter((c) => c.length > 3)
-    }));
-  console.log(`  counties: ${counties.length} (${counties.map((c) => `${c.name}: ${c.rings.length} rings, ${c.rings.filter((r) => key2(r[0]) === key2(r[r.length - 1])).length} closed`).join('; ')})`);
-  const regionOf = (pt) => counties.find((c) => c.rings.some((ring) => pointInRing(pt, ring)))?.name ?? 'Brandenburg';
-
+  // Regions = counties, from per-county membership lookups (see main()).
+  const countyOf = osm.countyOf ?? {};
+  console.log(`  county lookup covers ${Object.keys(countyOf).length} elements`);
   const places = els
     .filter((e) => e.type === 'node' && e.tags?.place)
     .map((n) => ({ name: nameOf(n.tags), rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
@@ -200,7 +201,7 @@ export function buildWaters(osm) {
       id: uniqueId(slug(nameOf(e.tags))),
       name: nameOf(e.tags),
       type: wt === 'oxbow' ? 'oxbow' : 'lake',
-      region: regionOf([lon, lat]),
+      region: countyOf[`${e.type}/${e.id}`] ?? 'Brandenburg',
       lat: +lat.toFixed(5), lon: +lon.toFixed(5),
       ha: Math.round(ha),
       geom: { t: 'poly', c: rings.map((r) => round(simplify(r, SIMPLIFY_M))) }
@@ -209,12 +210,24 @@ export function buildWaters(osm) {
 
   // Rivers and canals: group ways by name, chain them, cut into ~SECTION_KM pieces named by nearest town.
   const byName = new Map();
+  const wayCounties = [];
   for (const e of els) {
     if (e.type !== 'way' || !['river', 'canal'].includes(e.tags?.waterway) || !e.tags?.name) continue;
     const k = `${e.tags.waterway}|${nameOf(e.tags)}`;
     if (!byName.has(k)) byName.set(k, []);
     byName.get(k).push(geomOf(e.geometry));
+    const g = geomOf(e.geometry);
+    if (countyOf[`way/${e.id}`] && g.length) wayCounties.push({ c: centroid(g), county: countyOf[`way/${e.id}`] });
   }
+  const regionNear = (pt) => {
+    const f = toXY(pt[1]);
+    let best = 'Brandenburg', bestD = Infinity;
+    for (const w of wayCounties) {
+      const d = dist(f(pt), f(w.c));
+      if (d < bestD) { bestD = d; best = w.county; }
+    }
+    return best;
+  };
   for (const [k, pieces] of byName) {
     const [type, name] = k.split('|');
     const sections = [];
@@ -250,7 +263,7 @@ export function buildWaters(osm) {
         id: uniqueId(slug(label)),
         name: label,
         type,
-        region: regionOf([lon, lat]),
+        region: regionNear([lon, lat]),
         lat: +lat.toFixed(5), lon: +lon.toFixed(5),
         geom: { t: 'line', c: s.lines.map((l) => round(simplify(l, SIMPLIFY_M))) }
       });
@@ -290,7 +303,16 @@ async function main() {
     console.log('Querying Overpass for Brandenburg waters (4 requests, can take several minutes)...');
     const elements = [];
     for (const [name, q] of Object.entries(QUERIES)) elements.push(...(await overpass(name, q)));
-    osm = { elements };
+    const countyOf = {};
+    const list = (await overpass('county list', COUNTY_LIST)).filter((c) =>
+      /^12/.test(c.tags?.['de:regionalschluessel'] ?? c.tags?.['de:amtlicher_gemeindeschluessel'] ?? ''));
+    console.log(`  ${list.length} Brandenburg counties`);
+    for (const c of list) {
+      const cname = nameOf(c.tags).replace(/^Landkreis /, '');
+      const members = await overpass(`county ${cname}`, countyMembersQuery(c.id), true);
+      for (const m of members) countyOf[`${m.type}/${m.id}`] ??= cname;
+    }
+    osm = { elements, countyOf };
     if (args.save) await writeFile(args.save, JSON.stringify(osm));
   }
   const result = buildWaters(osm);
