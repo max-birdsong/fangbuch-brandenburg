@@ -10,6 +10,7 @@ import { ConfirmProvider, LangProvider, useRoute } from './app';
 import { useSession } from './lib/auth';
 import { useProfile } from './lib/hooks';
 import { adoptSession, startAutoSync } from './lib/sync';
+import { supabase } from './lib/supabase';
 import { Welcome } from './screens/Welcome';
 import { SignIn } from './screens/SignIn';
 import { ProfileForm } from './screens/ProfileForm';
@@ -61,6 +62,14 @@ function Router() {
     default:
       return <Home />;
   }
+}
+
+// Links in Supabase emails come back as #access_token=... or #message=...; that clashes with the
+// hash routes. Let Supabase read it first, then send the angler to the start screen.
+if (/(access_token|error_description|message)=/.test(location.hash)) {
+  const clean = () => history.replaceState(null, '', `${location.pathname}#/`);
+  if (supabase) void supabase.auth.getSession().finally(() => { clean(); dispatchEvent(new HashChangeEvent('hashchange')); });
+  else clean();
 }
 
 registerSW({ immediate: true });
