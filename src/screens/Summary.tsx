@@ -36,6 +36,7 @@ export function Summary({ id }: { id: string }) {
           <div className="card stat-card"><span className="big-num">{released}</span><span className="muted small">{t('statReleased')}</span></div>
         </div>
         {total === 0 && <p className="note-green">{t('skunk')}</p>}
+        {total > 0 && <a className="link-btn" href={`#/trip/${id}`}>{t('editCatches')}</a>}
         <section className="field">
           <h2 className="field-label">{t('satQ')}</h2>
           <Satisfaction value={trip.satisfaction} onChange={(v) => void updateTrip(id, { satisfaction: v })} />

@@ -25,6 +25,7 @@ import { SecureAccount } from './screens/SecureAccount';
 import { Privacy } from './screens/Privacy';
 import { Survey, SurveyThanks } from './screens/Survey';
 import { Admin } from './screens/Admin';
+import { Report } from './screens/Report';
 
 function Router() {
   const r = useRoute();
@@ -48,6 +49,7 @@ function Router() {
     case 'trip':
       if (r[2] === 'catch') return <CatchForm key={r[3] ?? 'new'} tripId={r[1]} catchId={r[3]} />;
       if (r[2] === 'summary') return <Summary id={r[1]} />;
+      if (r[2] === 'report') return <Report tripId={r[1]} />;
       return <TripScreen id={r[1]} />;
     case 'catches':
       return <Catches />;
