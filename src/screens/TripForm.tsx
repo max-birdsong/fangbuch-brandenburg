@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { go, useConfirm, useLang } from '../app';
 import { Chips, Field, TopBar } from '../components/ui';
 import { Satisfaction } from '../components/Satisfaction';
-import { SpeciesCard, type CatchRowState } from '../components/SpeciesCard';
+import { FishRow, type FishDraft } from '../components/FishRow';
 import { WaterPicker, type WaterValue } from '../components/WaterPicker';
 import { METHODS, PLATFORMS, QUICK_SPECIES, SPECIES, TARGETS, label } from '../data/catalog';
-import { applyReport, db, deleteTrip, rememberWater, saveTrip, type Trip } from '../lib/db';
+import { db, deleteTrip, rememberWater, replaceCatches, saveTrip, type Trip } from '../lib/db';
 import { scheduleSync } from '../lib/sync';
 import { fromInputs, toDateInput, toTimeInput, uuid } from '../lib/util';
 
@@ -28,7 +28,8 @@ export function TripForm({ id }: { id?: string }) {
   const [method, setMethod] = useState<string | null>(null);
   const [platform, setPlatform] = useState<string | null>(null);
   const [targets, setTargets] = useState<string[]>([]);
-  const [rows, setRows] = useState<CatchRowState[]>([]);
+  const [fish, setFish] = useState<FishDraft[]>([]);
+  const [showMissing, setShowMissing] = useState(false);
   const [satisfaction, setSatisfaction] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,41 +51,34 @@ export function TripForm({ id }: { id?: string }) {
       setTargets(tr.targets);
       setSatisfaction(tr.satisfaction);
       const cs = (await db.catches.where('tripId').equals(id).toArray()).filter((c) => !c.deleted);
-      const m = new Map<string, CatchRowState>();
-      for (const c of cs) {
-        const r = m.get(c.species) ?? { species: c.species, released: 0, kept: 0, lengths: [] };
-        if (c.kept) r.kept += c.count; else r.released += c.count;
-        if (c.lengthCm !== null) for (let i = 0; i < c.count; i++) r.lengths.push({ cm: c.lengthCm, kept: c.kept });
-        m.set(c.species, r);
+      // One row per fish (older entries may hold several fish in one record).
+      const rows: FishDraft[] = [];
+      for (const c of cs.sort((a, b) => a.updatedAt - b.updatedAt)) {
+        for (let i = 0; i < c.count; i++) rows.push({ key: uuid(), species: c.species, cm: c.lengthCm === null ? '' : String(c.lengthCm), kept: c.kept });
       }
-      setRows([...m.values()]);
+      setFish(rows);
       setLoaded(true);
     })();
   }, [id]);
 
   const suggestions = useMemo(() => {
     const tg = targets.filter((c) => SPECIES.some((s) => s.code === c));
-    return [...new Set([...tg, ...QUICK_SPECIES])].filter((c) => !rows.some((r) => r.species === c)).slice(0, 9);
-  }, [targets, rows]);
-  const others = useMemo(() => SPECIES.filter((s) => !rows.some((r) => r.species === s.code) && !suggestions.includes(s.code)), [rows, suggestions]);
+    return [...new Set([...tg, ...QUICK_SPECIES])].slice(0, 9);
+  }, [targets]);
+  const others = useMemo(() => SPECIES.filter((s) => !suggestions.includes(s.code)), [suggestions]);
 
   if (!loaded) return <main className="screen" />;
 
-  // Catch list editing. Counts never drop below the number of measured fish with that fate.
-  const update = (species: string, fn: (r: CatchRowState) => CatchRowState) => setRows((rs) => rs.map((r) => (r.species === species ? fn(r) : r)));
-  const addSpecies = (species: string) => setRows((rs) => [...rs, { species, released: 0, kept: 0, lengths: [] }]);
-  const change = (species: string, field: 'released' | 'kept', delta: number) =>
-    update(species, (r) => {
-      const measured = r.lengths.filter((l) => l.kept === (field === 'kept')).length;
-      return { ...r, [field]: Math.max(measured, Math.min(999, r[field] + delta)) };
+  // Catch list: one row per fish.
+  const addFish = (species: string) => setFish((fs) => [...fs, { key: uuid(), species, cm: '', kept: null }]);
+  const setOne = (key: string, f: FishDraft) => setFish((fs) => fs.map((x) => (x.key === key ? f : x)));
+  const copyFish = (key: string) =>
+    setFish((fs) => {
+      const i = fs.findIndex((x) => x.key === key);
+      return [...fs.slice(0, i + 1), { ...fs[i], key: uuid(), cm: '' }, ...fs.slice(i + 1)];
     });
-  const addLength = (species: string, cm: number, kept: boolean) =>
-    update(species, (r) => {
-      const lengths = [...r.lengths, { cm, kept }];
-      const field = kept ? 'kept' : 'released';
-      return { ...r, lengths, [field]: Math.max(r[field], lengths.filter((l) => l.kept === kept).length) };
-    });
-  const total = rows.reduce((s, r) => s + r.released + r.kept, 0);
+  const parseCm = (v: string) => (v.trim() === '' ? null : Number(v.replace(',', '.')));
+  const total = fish.length;
   const toggleTarget = (c: string) => setTargets((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]));
 
   const save = async () => {
@@ -93,6 +87,11 @@ export function TripForm({ id }: { id?: string }) {
     let endedAt = fromInputs(date, to);
     if (endedAt <= startedAt) endedAt = new Date(new Date(endedAt).getTime() + 86_400_000).toISOString(); // past midnight
     if (new Date(startedAt).getTime() > Date.now() + 60_000) return setErr(t('futureTime'));
+    if (fish.some((f) => f.kept === null)) {
+      setShowMissing(true);
+      return setErr(t('fateMissing'));
+    }
+    if (fish.some((f) => { const n = parseCm(f.cm); return n !== null && !(n > 0 && n < 400); })) return setErr(t('lengthInvalid'));
     setErr(null);
     setBusy(true);
     const tripId = id ?? uuid();
@@ -112,14 +111,7 @@ export function TripForm({ id }: { id?: string }) {
       satisfaction,
       deleted: false
     });
-    const target = rows
-      .flatMap((r) => [
-        { species: r.species, kept: false, count: r.released },
-        { species: r.species, kept: true, count: r.kept }
-      ])
-      .filter((x) => x.count > 0);
-    const lengths = rows.flatMap((r) => r.lengths.map((l) => ({ species: r.species, kept: l.kept, lengthCm: l.cm })));
-    await applyReport(tripId, target, null, lengths);
+    await replaceCatches(tripId, fish.map((f) => ({ species: f.species, kept: f.kept === true, lengthCm: parseCm(f.cm) })));
     if (water.waterId) await rememberWater(water.waterId);
     scheduleSync();
     go('', true);
@@ -169,24 +161,25 @@ export function TripForm({ id }: { id?: string }) {
         </Field>
 
         <Field label={t('catchesQ')} hint={t('catchesHint')}>
-          {rows.map((r) => (
-            <SpeciesCard
-              key={r.species}
-              row={r}
-              name={label(SPECIES, r.species, lang)}
-              onChange={(field, d) => change(r.species, field, d)}
-              onRemove={() => setRows((rs) => rs.filter((x) => x.species !== r.species))}
-              onAddLength={(cm, kept) => addLength(r.species, cm, kept)}
-              onRemoveLength={(i) => update(r.species, (x) => ({ ...x, lengths: x.lengths.filter((_, j) => j !== i) }))}
+          {fish.map((f, i) => (
+            <FishRow
+              key={f.key}
+              fish={f}
+              index={i + 1}
+              name={label(SPECIES, f.species, lang)}
+              showMissing={showMissing}
+              onChange={(nf) => setOne(f.key, nf)}
+              onCopy={() => copyFish(f.key)}
+              onRemove={() => setFish((fs) => fs.filter((x) => x.key !== f.key))}
             />
           ))}
           <div className="chips">
             {suggestions.map((c) => (
-              <button key={c} type="button" className="chip" onClick={() => addSpecies(c)}>+ {label(SPECIES, c, lang)}</button>
+              <button key={c} type="button" className="chip" onClick={() => addFish(c)}>+ {label(SPECIES, c, lang)}</button>
             ))}
           </div>
           {others.length > 0 && (
-            <select aria-label={t('chooseSpecies')} value="" onChange={(e) => e.target.value && addSpecies(e.target.value)}>
+            <select aria-label={t('chooseSpecies')} value="" onChange={(e) => e.target.value && addFish(e.target.value)}>
               <option value="">{t('chooseSpecies')}</option>
               {others.map((s) => (
                 <option key={s.code} value={s.code}>{s[lang]}</option>
