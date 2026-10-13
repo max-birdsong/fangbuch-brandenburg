@@ -19,18 +19,39 @@ const SECTION_KM = Number(args['section-km'] ?? 10);
 const SIMPLIFY_M = Number(args['simplify-m'] ?? 25);
 const ENDPOINT = args.endpoint ?? 'https://overpass-api.de/api/interpreter';
 
-const QUERY = `
-[out:json][timeout:600][maxsize:1073741824];
-area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
-(
-  way["natural"="water"]["name"](area.bb);
-  relation["natural"="water"]["name"](area.bb);
-  way["waterway"~"^(river|canal)$"]["name"](area.bb);
-  node["place"~"^(city|town|village)$"]["name"](area.bb);
-  relation["boundary"="administrative"]["admin_level"="6"](area.bb);
-);
-out geom;
-`;
+// Split into several smaller requests: one huge request tends to time out on the public servers.
+const AREA = 'area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;';
+const QUERIES = {
+  lakes: `[out:json][timeout:300];${AREA}(way["natural"="water"]["name"](area.bb);relation["natural"="water"]["name"](area.bb););out geom;`,
+  rivers: `[out:json][timeout:300];${AREA}way["waterway"~"^(river|canal)$"]["name"](area.bb);out geom;`,
+  places: `[out:json][timeout:120];${AREA}node["place"~"^(city|town|village)$"]["name"](area.bb);out;`,
+  counties: `[out:json][timeout:300];${AREA}relation["boundary"="administrative"]["admin_level"="6"](area.bb);out geom;`
+};
+const ENDPOINTS = [ENDPOINT, 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+
+async function overpass(name, query) {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const url = ENDPOINTS[attempt % ENDPOINTS.length];
+    const t0 = Date.now();
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'fangbuch-brandenburg-import (IfB Potsdam-Sacrow)' },
+        body: 'data=' + encodeURIComponent(query)
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 200).replace(/\s+/g, ' ')}`);
+      const json = JSON.parse(text);
+      if (json.remark && /error|timed out|runtime/i.test(json.remark)) throw new Error(`Overpass remark: ${json.remark}`);
+      console.log(`  ${name}: ${json.elements.length} elements from ${url} in ${((Date.now() - t0) / 1000).toFixed(0)} s (${(text.length / 1e6).toFixed(1)} MB)`);
+      return json.elements;
+    } catch (e) {
+      console.log(`  ${name}: attempt ${attempt + 1} at ${url} failed: ${e.message}`);
+      await new Promise((r) => setTimeout(r, 20_000 * (attempt + 1)));
+    }
+  }
+  throw new Error(`Giving up on ${name}`);
+}
 
 // ------------------------------------------------------------------ geometry helpers
 const toXY = (lat0) => {
@@ -248,14 +269,10 @@ async function main() {
   if (args.from) {
     osm = JSON.parse(await readFile(args.from, 'utf8'));
   } else {
-    console.log(`Querying Overpass (${ENDPOINT}) for Brandenburg waters, this can take a few minutes...`);
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'fangbuch-brandenburg-import' },
-      body: 'data=' + encodeURIComponent(QUERY)
-    });
-    if (!res.ok) throw new Error(`Overpass error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    osm = await res.json();
+    console.log('Querying Overpass for Brandenburg waters (4 requests, can take several minutes)...');
+    const elements = [];
+    for (const [name, q] of Object.entries(QUERIES)) elements.push(...(await overpass(name, q)));
+    osm = { elements };
     if (args.save) await writeFile(args.save, JSON.stringify(osm));
   }
   const result = buildWaters(osm);
