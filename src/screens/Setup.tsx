@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { go, useLang } from '../app';
 import { Chips, Field, TopBar } from '../components/ui';
 import { WaterPicker, type WaterValue } from '../components/WaterPicker';
-import { METHODS, PLATFORMS, TARGETS } from '../data/catalog';
+import { METHODS, PLATFORMS, TARGETS, label } from '../data/catalog';
 import { getKV, rememberWater, saveTrip, setKV } from '../lib/db';
 import { fromInputs, toDateInput, toTimeInput, uuid } from '../lib/util';
 import { scheduleSync } from '../lib/sync';
@@ -21,10 +21,13 @@ export function Setup() {
   const [from, setFrom] = useState(toTimeInput(new Date(now.getTime() - 3 * 3600_000)).slice(0, 3) + '00');
   const [to, setTo] = useState(toTimeInput(now).slice(0, 3) + '00');
   const [err, setErr] = useState<string | null>(null);
+  // After the first trip, method / platform / targets collapse to one line with 'Ändern'.
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     void getKV<LastSetup | null>('lastSetup', null).then((l) => {
       if (!l) return;
+      setCollapsed(true);
       setMethod(l.method);
       setPlatform(l.platform);
       setTargets(l.targets);
@@ -102,15 +105,30 @@ export function Setup() {
           <WaterPicker key={mode} value={water} autoLocate={mode === 'now'} onChange={(v) => { setWater(v); setErr(null); }} />
         </Field>
 
-        <Field label={t('method')}>
-          <Chips label={t('method')} options={METHODS.map((m) => ({ code: m.code, label: m[lang] }))} value={method} onChange={setMethod} />
-        </Field>
-        <Field label={t('platform')}>
-          <Chips label={t('platform')} options={PLATFORMS.map((m) => ({ code: m.code, label: m[lang] }))} value={platform} onChange={setPlatform} />
-        </Field>
-        <Field label={<>{t('target')} <span className="muted">({t('multiple')})</span></>}>
-          <Chips multi label={t('target')} options={TARGETS.map((m) => ({ code: m.code, label: m[lang] }))} value={targets} onChange={toggleTarget} />
-        </Field>
+        {collapsed ? (
+          <div className="card selected-water">
+            <div className="stack-xs">
+              <span className="card-title">
+                {[label(METHODS, method, lang), label(PLATFORMS, platform, lang)].filter(Boolean).join(' · ')}
+                {targets.length > 0 && ` · ${t('targetPrefix')} ${targets.map((c) => label(TARGETS, c, lang)).join(', ')}`}
+              </span>
+              <span className="small muted">{t('sameAsLast')}</span>
+            </div>
+            <button type="button" className="btn small secondary" onClick={() => setCollapsed(false)}>{t('change')}</button>
+          </div>
+        ) : (
+          <>
+            <Field label={t('method')}>
+              <Chips label={t('method')} options={METHODS.map((m) => ({ code: m.code, label: m[lang] }))} value={method} onChange={setMethod} />
+            </Field>
+            <Field label={t('platform')}>
+              <Chips label={t('platform')} options={PLATFORMS.map((m) => ({ code: m.code, label: m[lang] }))} value={platform} onChange={setPlatform} />
+            </Field>
+            <Field label={<>{t('target')} <span className="muted">({t('multiple')})</span></>}>
+              <Chips multi label={t('target')} options={TARGETS.map((m) => ({ code: m.code, label: m[lang] }))} value={targets} onChange={toggleTarget} />
+            </Field>
+          </>
+        )}
         {err && <p className="error" role="alert">{err}</p>}
       </div>
       <footer className="actionbar">

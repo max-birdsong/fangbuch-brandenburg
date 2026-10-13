@@ -305,3 +305,11 @@ a.tile { display: flex; align-items: center; justify-content: center; text-decor
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(150px + var(--safe-b)); z-index: 20; width: calc(100% - 32px); max-width: 520px;
   background: var(--ink); color: #fff; border-radius: 12px; padding: 10px 10px 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 600; }
 .toast-btn { background: transparent; border: 0; color: var(--accent); font-weight: 800; min-height: 44px; padding: 0 10px; cursor: pointer; }
+
+.length-chip { min-height: 36px; font-size: 13px; padding: 0 12px; }
+.small-link { font-size: 14px; padding: 4px 0; }
+.length-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.length-input { width: 96px; }
+.length-input input { min-height: 44px; }
+.source-note.example { background: #EEE9FB; color: #4B3A9E; }
+.check.small { font-size: 14px; min-height: 44px; }
