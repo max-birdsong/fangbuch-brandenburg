@@ -51,12 +51,10 @@ export function TripForm({ id }: { id?: string }) {
       setTargets(tr.targets);
       setSatisfaction(tr.satisfaction);
       const cs = (await db.catches.where('tripId').equals(id).toArray()).filter((c) => !c.deleted);
-      // One row per fish (older entries may hold several fish in one record).
-      const rows: FishDraft[] = [];
-      for (const c of cs.sort((a, b) => a.updatedAt - b.updatedAt)) {
-        for (let i = 0; i < c.count; i++) rows.push({ key: uuid(), species: c.species, cm: c.lengthCm === null ? '' : String(c.lengthCm).replace('.', lang === 'de' ? ',' : '.'), kept: c.kept });
-      }
-      setFish(rows);
+      setFish(cs.sort((a, b) => a.updatedAt - b.updatedAt).map((c) => ({
+        key: uuid(), species: c.species, count: c.count, kept: c.kept,
+        cm: c.lengthCm === null ? '' : String(c.lengthCm).replace('.', lang === 'de' ? ',' : '.')
+      })));
       setLoaded(true);
     })();
   }, [id]);
@@ -78,7 +76,7 @@ export function TripForm({ id }: { id?: string }) {
     setFish((fs) => fs.filter((x) => x.key !== key));
     setSheet(null);
   };
-  const total = fish.length;
+  const total = fish.reduce((n, f) => n + f.count, 0);
   const toggleTarget = (c: string) => setTargets((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]));
 
   const save = async () => {
@@ -106,7 +104,7 @@ export function TripForm({ id }: { id?: string }) {
       satisfaction,
       deleted: false
     });
-    await replaceCatches(tripId, fish.map((f) => ({ species: f.species, kept: f.kept === true, lengthCm: parseCm(f.cm) })));
+    await replaceCatches(tripId, fish.map((f) => ({ species: f.species, count: f.count, kept: f.kept, lengthCm: parseCm(f.cm) })));
     if (water.waterId) await rememberWater(water.waterId);
     scheduleSync();
     go('', true);
@@ -161,7 +159,7 @@ export function TripForm({ id }: { id?: string }) {
               {fish.map((f) => (
                 <li key={f.key}>
                   <button type="button" className="fish-line" onClick={() => setSheet({ fish: f })}>
-                    {fishLine(f, label(SPECIES, f.species, lang), f.kept ? t('kept') : t('released'), lang)}
+                    {fishLine(f, label(SPECIES, f.species, lang), f.kept ? t('kept') : t('released'), t('pieces', { n: f.count }), lang)}
                   </button>
                 </li>
               ))}
