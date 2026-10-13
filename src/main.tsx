@@ -22,6 +22,7 @@ import { Catches } from './screens/Catches';
 import { Profile } from './screens/Profile';
 import { SecureAccount } from './screens/SecureAccount';
 import { Privacy } from './screens/Privacy';
+import { Survey, SurveyThanks } from './screens/Survey';
 
 function Router() {
   const r = useRoute();
@@ -52,6 +53,8 @@ function Router() {
       return r[1] === 'edit' ? <ProfileForm mode="edit" /> : <Profile />;
     case 'secure':
       return <SecureAccount />;
+    case 'survey':
+      return r[1] === 'thanks' ? <SurveyThanks /> : <Survey />;
     default:
       return <Home />;
   }
