@@ -41,7 +41,7 @@ export function Catches() {
           </ul>
         )}
         <h2 className="section-title">{t('allTrips')}</h2>
-        {trips.filter((tr) => tr.endedAt).map((tr) => (
+        {trips.map((tr) => (
           <TripCard key={tr.id} trip={tr} catches={catches.filter((c) => c.tripId === tr.id)} />
         ))}
       </div>
