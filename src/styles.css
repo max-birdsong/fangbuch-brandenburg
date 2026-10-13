@@ -249,3 +249,47 @@ input.invalid { border-color: var(--danger); }
 .likert-ends span { max-width: 45%; }
 .num-input { max-width: 140px; }
 .survey-card { border: 2px solid var(--accent); }
+
+/* Dashboard */
+:root {
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-grid: #e3e8e8;
+  --viz-base: #9fb0b3;
+}
+.wrap { flex-wrap: wrap; }
+.source-note { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; }
+.source-note.all { background: var(--teal-pale); color: var(--teal-dark); }
+.source-note.own { background: #FFF4E0; color: var(--amber); }
+.kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.kpis div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column-reverse; gap: 2px; }
+.kpis dt { font-size: 13px; color: var(--muted); }
+.kpis dd { margin: 0; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.viz-card { display: flex; flex-direction: column; gap: 6px; }
+.viz-title { font-size: 17px; font-weight: 800; }
+.viz-sub { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.viz-wrap { position: relative; width: 100%; }
+.viz-wrap svg { display: block; overflow: visible; }
+.viz-s1 { fill: var(--viz-1); }
+.viz-s2 { fill: var(--viz-2); }
+.viz-grid { stroke: var(--viz-grid); stroke-width: 1; }
+.viz-base { stroke: var(--viz-base); stroke-width: 1; }
+.viz-track { stroke: var(--viz-grid); stroke-width: 2; stroke-linecap: round; }
+.viz-dot { fill: var(--viz-1); stroke: var(--card); stroke-width: 2; }
+.viz-axis { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.viz-label { font-size: 13px; font-weight: 600; fill: var(--ink); }
+.viz-value { font-size: 13px; font-weight: 700; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.viz-wrap rect[tabindex]:focus { outline: none; }
+.viz-wrap rect[tabindex]:focus-visible { stroke: var(--accent); stroke-width: 2; }
+.viz-tip { position: absolute; z-index: 3; pointer-events: none; background: var(--ink); color: #fff; font-size: 13px; line-height: 1.35; padding: 8px 10px; border-radius: 8px; max-width: 220px; transform: translateY(4px); }
+.viz-legend { display: flex; gap: 16px; font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.viz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.viz-key { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.viz-k1 { background: var(--viz-1); }
+.viz-k2 { background: var(--viz-2); }
+.viz-table summary { cursor: pointer; font-size: 13px; color: var(--teal); font-weight: 700; padding: 6px 0; }
+.table-scroll { overflow-x: auto; }
+.table-scroll table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.table-scroll th, .table-scroll td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table-scroll th { color: var(--muted); font-weight: 700; }
+.viz-scale-note { font-size: 12px; color: var(--muted); margin-top: 2px; }
