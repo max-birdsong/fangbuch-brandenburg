@@ -1,0 +1,53 @@
+name: Import Brandenburg waters (OpenStreetMap)
+
+# Regenerates public/waters.json from OpenStreetMap via the Overpass API and commits it to the
+# branch the workflow ran on. Runs on pushes to the `waters-import` branch, or manually from the
+# Actions tab ("Run workflow"), where minimum lake size and river section length can be set.
+
+on:
+  push:
+    branches: [waters-import]
+    paths: [.github/workflows/import-waters.yml, scripts/import-waters.mjs]
+  workflow_dispatch:
+    inputs:
+      min_ha:
+        description: Minimum lake size in hectares
+        default: '5'
+      section_km:
+        description: River section length in km
+        default: '10'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Import from Overpass
+        run: |
+          node scripts/import-waters.mjs --min-ha=${{ inputs.min_ha || '5' }} --section-km=${{ inputs.section_km || '10' }} \
+            || (echo "Main Overpass server failed, trying mirror" && sleep 30 && \
+                node scripts/import-waters.mjs --min-ha=${{ inputs.min_ha || '5' }} --section-km=${{ inputs.section_km || '10' }} --endpoint=https://overpass.kumi.systems/api/interpreter)
+      - name: Summary
+        run: |
+          node -e '
+            const d = require("./public/waters.json");
+            const by = (k) => Object.entries(d.waters.reduce((m, w) => (m[w[k]] = (m[w[k]] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]);
+            const lines = ["## Waters import", "", `Total: ${d.waters.length} waters, file size ${(require("fs").statSync("public/waters.json").size/1024/1024).toFixed(1)} MB`, "", "| Type | Count |", "|---|---|", ...by("type").map(([k, v]) => `| ${k} | ${v} |`), "", "| Region | Count |", "|---|---|", ...by("region").map(([k, v]) => `| ${k} | ${v} |`), "", "Oder sections: " + d.waters.filter(w => /^Oder\b/.test(w.name)).map(w => w.name).join(", ")];
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+            console.log(lines.join("\n"));
+          '
+      - name: Commit result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/waters.json
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Update Brandenburg waters from OpenStreetMap"
+          git push

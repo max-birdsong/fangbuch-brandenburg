@@ -20,7 +20,7 @@ const SIMPLIFY_M = Number(args['simplify-m'] ?? 25);
 const ENDPOINT = args.endpoint ?? 'https://overpass-api.de/api/interpreter';
 
 const QUERY = `
-[out:json][timeout:300];
+[out:json][timeout:600][maxsize:1073741824];
 area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
 (
   way["natural"="water"]["name"](area.bb);
