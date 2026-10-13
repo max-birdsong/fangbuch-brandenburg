@@ -5,11 +5,9 @@ import { Satisfaction } from '../components/Satisfaction';
 import { SpeciesCard, type CatchRowState } from '../components/SpeciesCard';
 import { WaterPicker, type WaterValue } from '../components/WaterPicker';
 import { METHODS, PLATFORMS, QUICK_SPECIES, SPECIES, TARGETS, label } from '../data/catalog';
-import { applyReport, db, deleteTrip, getKV, rememberWater, saveTrip, setKV, type Trip } from '../lib/db';
+import { applyReport, db, deleteTrip, rememberWater, saveTrip, type Trip } from '../lib/db';
 import { scheduleSync } from '../lib/sync';
 import { fromInputs, toDateInput, toTimeInput, uuid } from '../lib/util';
-
-type LastSetup = { method: string | null; platform: string | null; targets: string[] };
 
 const roundHour = (d: Date) => toTimeInput(d).slice(0, 3) + '00';
 
@@ -27,26 +25,13 @@ export function TripForm({ id }: { id?: string }) {
   const [date, setDate] = useState(toDateInput(now));
   const [from, setFrom] = useState(roundHour(new Date(now.getTime() - 3 * 3_600_000)));
   const [to, setTo] = useState(roundHour(now));
-  const [method, setMethod] = useState<string | null>('spin');
-  const [platform, setPlatform] = useState<string | null>('shore');
+  const [method, setMethod] = useState<string | null>(null);
+  const [platform, setPlatform] = useState<string | null>(null);
   const [targets, setTargets] = useState<string[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
   const [rows, setRows] = useState<CatchRowState[]>([]);
   const [satisfaction, setSatisfaction] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  // New day: method / platform / targets from last time, collapsed to one line.
-  useEffect(() => {
-    if (id) return;
-    void getKV<LastSetup | null>('lastSetup', null).then((l) => {
-      if (!l) return;
-      setMethod(l.method);
-      setPlatform(l.platform);
-      setTargets(l.targets);
-      setCollapsed(true);
-    });
-  }, [id]);
 
   // Edit: load the day and its catches.
   useEffect(() => {
@@ -63,7 +48,6 @@ export function TripForm({ id }: { id?: string }) {
       setMethod(tr.method);
       setPlatform(tr.platform);
       setTargets(tr.targets);
-      setCollapsed(true);
       setSatisfaction(tr.satisfaction);
       const cs = (await db.catches.where('tripId').equals(id).toArray()).filter((c) => !c.deleted);
       const m = new Map<string, CatchRowState>();
@@ -137,7 +121,6 @@ export function TripForm({ id }: { id?: string }) {
     const lengths = rows.flatMap((r) => r.lengths.map((l) => ({ species: r.species, kept: l.kept, lengthCm: l.cm })));
     await applyReport(tripId, target, null, lengths);
     if (water.waterId) await rememberWater(water.waterId);
-    if (!id) await setKV('lastSetup', { method, platform, targets } satisfies LastSetup);
     scheduleSync();
     go('', true);
   };
@@ -175,25 +158,14 @@ export function TripForm({ id }: { id?: string }) {
         </Field>
 
         <Field label={t('how')}>
-          {collapsed ? (
-            <div className="card selected-water">
-              <div className="stack-xs">
-                <span className="card-title">
-                  {[label(METHODS, method, lang), label(PLATFORMS, platform, lang)].filter(Boolean).join(' · ')}
-                  {targets.length > 0 && ` · ${t('targetPrefix')} ${targets.map((c) => label(TARGETS, c, lang)).join(', ')}`}
-                </span>
-                {!id && <span className="small muted">{t('sameAsLast')}</span>}
-              </div>
-              <button type="button" className="btn small secondary" onClick={() => setCollapsed(false)}>{t('change')}</button>
-            </div>
-          ) : (
-            <div className="stack">
-              <Chips label={t('method')} options={METHODS.map((m) => ({ code: m.code, label: m[lang] }))} value={method} onChange={setMethod} />
-              <Chips label={t('platform')} options={PLATFORMS.map((m) => ({ code: m.code, label: m[lang] }))} value={platform} onChange={setPlatform} />
-              <p className="sub-label">{t('target')} ({t('multiple')})</p>
-              <Chips multi label={t('target')} options={TARGETS.map((m) => ({ code: m.code, label: m[lang] }))} value={targets} onChange={toggleTarget} />
-            </div>
-          )}
+          <div className="stack">
+            <p className="sub-label">{t('method')}</p>
+            <Chips label={t('method')} options={METHODS.map((m) => ({ code: m.code, label: m[lang] }))} value={method} onChange={(v) => setMethod(method === v ? null : v)} />
+            <p className="sub-label">{t('platform')}</p>
+            <Chips label={t('platform')} options={PLATFORMS.map((m) => ({ code: m.code, label: m[lang] }))} value={platform} onChange={(v) => setPlatform(platform === v ? null : v)} />
+            <p className="sub-label">{t('target')} ({t('multiple')})</p>
+            <Chips multi label={t('target')} options={TARGETS.map((m) => ({ code: m.code, label: m[lang] }))} value={targets} onChange={toggleTarget} />
+          </div>
         </Field>
 
         <Field label={t('catchesQ')} hint={t('catchesHint')}>

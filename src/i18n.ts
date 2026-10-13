@@ -89,7 +89,6 @@ const de = {
   distanceKm: '{km} km',
   distanceM: '{m} m',
 
-  targetPrefix: 'Ziel:',
 
   count: 'Anzahl',
   length: 'Länge',
@@ -163,7 +162,6 @@ const de = {
   saveWithFish: 'Speichern ({n} Fische)',
   addLength: '+ Länge eintragen (freiwillig)',
   addShort: 'Hinzufügen',
-  sameAsLast: 'wie letztes Mal',
   chooseSpecies: 'Weitere Art wählen',
   removeSpecies: 'Art entfernen',
   dashboard: 'Auswertung',
@@ -269,7 +267,6 @@ const en: Record<StringKey, string> = {
   distanceKm: '{km} km',
   distanceM: '{m} m',
 
-  targetPrefix: 'Target:',
 
   count: 'Number',
   length: 'Length',
@@ -343,7 +340,6 @@ const en: Record<StringKey, string> = {
   saveWithFish: 'Save ({n} fish)',
   addLength: '+ Add a length (optional)',
   addShort: 'Add',
-  sameAsLast: 'same as last time',
   chooseSpecies: 'Choose another species',
   removeSpecies: 'Remove species',
   dashboard: 'Dashboard',
