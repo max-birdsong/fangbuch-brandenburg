@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { go, useLang } from '../app';
 import { TopBar } from '../components/ui';
-import { sendLoginCode, verifyLoginCode } from '../lib/auth';
+import { hasSession, sendLoginCode, verifyLoginCode } from '../lib/auth';
 
 export function SignIn() {
   const { t } = useLang();
@@ -47,23 +47,40 @@ export function SignIn() {
             <button className="btn primary big" disabled={busy}>{t('sendCode')}</button>
           </form>
         ) : (
-          <form
-            className="stack"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void run(async () => {
-                await verifyLoginCode(email.trim(), code.trim());
-                go('', true);
-              });
-            }}
-          >
+          <div className="stack">
             <p>{t('codeSent', { email })}</p>
-            <label className="input-label">
-              {t('code')}
-              <input inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
-            </label>
-            <button className="btn primary big" disabled={busy}>{t('confirm')}</button>
-          </form>
+            <button
+              className="btn primary big"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  if (await hasSession()) go('', true);
+                  else setErr(t('notYetConfirmed'));
+                })
+              }
+            >
+              {t('linkDone')}
+            </button>
+            <details className="stack-sm">
+              <summary className="link-btn">{t('orCode')}</summary>
+              <form
+                className="stack-sm"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void run(async () => {
+                    await verifyLoginCode(email.trim(), code.trim());
+                    go('', true);
+                  });
+                }}
+              >
+                <label className="input-label">
+                  {t('code')}
+                  <input inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
+                </label>
+                <button className="btn secondary" disabled={busy}>{t('confirm')}</button>
+              </form>
+            </details>
+          </div>
         )}
         {err && <p className="error" role="alert">{err}</p>}
       </div>
