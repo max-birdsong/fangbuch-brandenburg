@@ -1,6 +1,6 @@
 // Accounts: anglers start without any login (anonymous Supabase user), so the first catch is
-// one tap away. They can later "secure" the log with an email address (needed for a new phone
-// and for the prize draw). Signing in on another device uses a 6-digit code sent by email,
+// one tap away. They can later "secure" the log with an email address (needed for a new phone).
+// Signing in on another device uses a 6-digit code sent by email,
 // which works better inside an installed web app than a magic link.
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';

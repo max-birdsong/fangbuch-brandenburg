@@ -46,7 +46,6 @@ export interface Profile {
   hasFishingExam: boolean | null;
   licenses: string[];
   licensesOther: string;
-  lotteryOptIn: boolean;
   consentVersion: string;
   consentAt: string;
   dirty: 0 | 1;
@@ -120,5 +119,36 @@ export async function wipeLocal() {
     await db.catches.clear();
     await db.kv.clear();
     if (lang) await db.kv.put(lang);
+  });
+}
+
+// ---------------------------------------------------------------- survey
+export type SurveyAnswer = number | string;
+export interface SurveyResponse {
+  id: string;
+  surveyId: string;
+  version: number;
+  answers: Record<string, SurveyAnswer>;
+  page: number; // where to resume
+  startedAt: string;
+  completedAt: string | null;
+  snoozedUntil: number | null; // "Später" on the home card (local only)
+  dirty: 0 | 1;
+  updatedAt: number;
+}
+
+export const surveyKey = (surveyId: string) => `survey:${surveyId}`;
+export const getSurvey = (surveyId: string) => getKV<SurveyResponse | null>(surveyKey(surveyId), null);
+export async function saveSurvey(r: SurveyResponse, localOnly = false) {
+  await setKV(surveyKey(r.surveyId), { ...r, dirty: localOnly ? r.dirty : 1, updatedAt: Date.now() });
+}
+
+/** Atomic read-modify-write, so quick successive answers never overwrite each other. */
+export async function patchSurvey(surveyId: string, fn: (r: SurveyResponse) => SurveyResponse) {
+  await db.transaction('rw', db.kv, async () => {
+    const cur = await db.kv.get(surveyKey(surveyId));
+    if (!cur) return;
+    const next = fn(cur.value as SurveyResponse);
+    await db.kv.put({ key: surveyKey(surveyId), value: { ...next, dirty: 1, updatedAt: Date.now() } });
   });
 }
