@@ -28,6 +28,10 @@ area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
   way["natural"="water"]["name"](area.bb);
   relation["natural"="water"]["name"](area.bb);
   way["waterway"~"^(river|canal)$"]["name"](area.bb);
+  // Border rivers lie on the state boundary, so the area filter misses them: add them by bounding box.
+  way["waterway"="river"]["name"~"Oder|Odra|Neiße|Nysa"](51.25,14.0,53.33,14.95);
+  way["waterway"="river"]["name"~"Elbe|Łaba"](52.85,11.2,53.35,12.0);
+  way["waterway"="river"]["name"~"Elbe"](51.35,13.05,51.55,13.35);
   node["place"~"^(city|town|village)$"]["name"](area.bb);
   relation["boundary"="administrative"]["admin_level"="6"](area.bb);
 );
@@ -121,49 +125,88 @@ const slug = (s) => s.toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 // ------------------------------------------------------------------ main processing
+// Prefer the German name; map bilingual / Polish names of the border rivers to the German one.
+export function waterName(tags) {
+  const raw = (tags?.['name:de'] || tags?.name || '').trim();
+  if (!raw) return '';
+  if (/^(Oder|Odra)(\s*[-/–]\s*(Oder|Odra))?$/i.test(raw)) return 'Oder';
+  if (/^((Lausitzer\s+)?Neiße|Nysa\s+Łużycka)(\s*[-/–]\s*.*)?$/i.test(raw)) return 'Neiße';
+  if (/^(Elbe|Łaba|Labe)(\s*[-/–]\s*.*)?$/i.test(raw)) return 'Elbe';
+  return raw;
+}
+
+// Region label: German name of the Landkreis without the Sorbian part ("Cottbus - Chóśebuz" -> "Cottbus").
+const regionName = (tags) => (tags?.['name:de'] || tags?.name || '').split(/\s+-\s+/)[0].trim();
+
 export function buildWaters(osm) {
   const els = osm.elements ?? [];
 
   // Counties (Landkreise / kreisfreie Städte) as regions.
   const counties = els
     .filter((e) => e.type === 'relation' && e.tags?.boundary === 'administrative' && e.tags?.admin_level === '6')
-    .map((r) => ({
-      name: r.tags.name,
-      rings: joinChains((r.members ?? []).filter((m) => m.role === 'outer' && m.geometry).map((m) => geomOf(m.geometry)))
-        .filter((c) => c.length > 3)
-    }));
-  const regionOf = (pt) => counties.find((c) => c.rings.some((ring) => pointInRing(pt, ring)))?.name ?? 'Brandenburg';
+    .map((r) => {
+      const rings = joinChains((r.members ?? []).filter((m) => m.role === 'outer' && m.geometry).map((m) => geomOf(m.geometry)))
+        .filter((c) => c.length > 3);
+      return { name: regionName(r.tags), rings, c: rings.length ? centroid(rings.flat()) : null };
+    })
+    .filter((c) => c.name && c.rings.length);
+  // Inside a county, else the nearest county (border rivers lie on the state boundary).
+  const regionOf = (pt) => {
+    const hit = counties.find((c) => c.rings.some((ring) => pointInRing(pt, ring)));
+    if (hit) return hit.name;
+    const f = toXY(pt[1]);
+    let best = 'Brandenburg', bestD = Infinity;
+    for (const c of counties) {
+      for (const ring of c.rings) {
+        for (let i = 0; i < ring.length; i += 5) {
+          const d = dist(f(pt), f(ring[i]));
+          if (d < bestD) { bestD = d; best = c.name; }
+        }
+      }
+    }
+    return best;
+  };
 
   const places = els
-    .filter((e) => e.type === 'node' && e.tags?.place)
+    .filter((e) => e.type === 'node' && e.tags?.place && e.tags?.name)
     .map((n) => ({ name: n.tags.name, rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
-  const nearestPlace = (pt, minRank = 1) => {
+  const nearestPlace = (pt, minRank = 1, exclude = new Set()) => {
     const f = toXY(pt[1]);
     const p = f(pt);
     let best = null, bestD = Infinity;
     for (const pl of places) {
-      if (pl.rank < minRank) continue;
+      if (pl.rank < minRank || exclude.has(pl.name)) continue;
       // Prefer bigger places: towns count as a bit closer than villages.
       const d = dist(p, f(pl.xy)) / (1 + 0.5 * (pl.rank - 1));
       if (d < bestD) { bestD = d; best = pl; }
     }
     return best?.name;
   };
+  const metres = (a, b) => { const f = toXY(a[1]); return dist(f(a), f(b)); };
+
+  // Rivers and canals: group ways by (type, name).
+  const byName = new Map();
+  for (const e of els) {
+    if (e.type !== 'way' || !['river', 'canal'].includes(e.tags?.waterway)) continue;
+    const name = waterName(e.tags);
+    if (!name) continue;
+    const k = `${e.tags.waterway}|${name}`;
+    if (!byName.has(k)) byName.set(k, []);
+    byName.get(k).push(geomOf(e.geometry));
+  }
+  const lineNames = new Set([...byName.keys()].map((k) => k.split('|')[1]));
 
   const out = [];
-  const usedIds = new Set();
-  const uniqueId = (base) => {
-    let id = base, n = 2;
-    while (usedIds.has(id)) id = `${base}-${n++}`;
-    usedIds.add(id);
-    return id;
-  };
 
   // Lakes: ways and multipolygon relations tagged natural=water.
-  const lakeEls = els.filter((e) => e.tags?.natural === 'water' && e.tags?.name && (e.type === 'way' || e.type === 'relation'));
-  for (const e of lakeEls) {
+  const lakes = [];
+  for (const e of els) {
+    if (e.tags?.natural !== 'water' || (e.type !== 'way' && e.type !== 'relation')) continue;
+    const name = waterName(e.tags);
+    if (!name) continue;
     const wt = e.tags.water;
-    if (wt && !['lake', 'reservoir', 'pond', 'oxbow', 'lagoon', 'basin'].includes(wt)) continue; // skip river areas etc.
+    if (wt && !['lake', 'reservoir', 'pond', 'oxbow', 'lagoon', 'basin'].includes(wt)) continue; // river areas etc.
+    if (!wt && lineNames.has(name)) continue; // untagged area of a river/canal that is already a line
     let rings;
     if (e.type === 'way') rings = [geomOf(e.geometry)];
     else rings = joinChains((e.members ?? []).filter((m) => m.role === 'outer' && m.geometry).map((m) => geomOf(m.geometry)));
@@ -172,26 +215,28 @@ export function buildWaters(osm) {
     const ha = rings.reduce((s, r) => s + ringAreaHa(r), 0);
     if (ha < MIN_HA) continue;
     const main = rings.slice().sort((a, b) => ringAreaHa(b) - ringAreaHa(a))[0];
-    const [lon, lat] = centroid(main);
+    lakes.push({ name, wt, rings, ha, c: centroid(main), rel: e.type === 'relation' });
+  }
+  // The same lake mapped twice (a way and a relation): same name, centres < 1 km apart -> keep the larger.
+  lakes.sort((a, b) => b.ha - a.ha || Number(b.rel) - Number(a.rel));
+  const keptLakes = [];
+  for (const l of lakes) {
+    if (keptLakes.some((k) => k.name === l.name && metres(k.c, l.c) < 1000)) continue;
+    keptLakes.push(l);
+  }
+  for (const l of keptLakes) {
+    const [lon, lat] = l.c;
     out.push({
-      id: uniqueId(slug(e.tags.name)),
-      name: e.tags.name,
-      type: wt === 'oxbow' ? 'oxbow' : 'lake',
+      name: l.name,
+      type: l.wt === 'oxbow' ? 'oxbow' : 'lake',
       region: regionOf([lon, lat]),
       lat: +lat.toFixed(5), lon: +lon.toFixed(5),
-      ha: Math.round(ha),
-      geom: { t: 'poly', c: rings.map((r) => round(simplify(r, SIMPLIFY_M))) }
+      ha: Math.round(l.ha),
+      geom: { t: 'poly', c: l.rings.map((r) => round(simplify(r, SIMPLIFY_M))) }
     });
   }
 
-  // Rivers and canals: group ways by name, chain them, cut into ~SECTION_KM pieces named by nearest town.
-  const byName = new Map();
-  for (const e of els) {
-    if (e.type !== 'way' || !['river', 'canal'].includes(e.tags?.waterway) || !e.tags?.name) continue;
-    const k = `${e.tags.waterway}|${e.tags.name}`;
-    if (!byName.has(k)) byName.set(k, []);
-    byName.get(k).push(geomOf(e.geometry));
-  }
+  // Rivers and canals: chain the ways, cut into ~SECTION_KM pieces named by nearest town.
   for (const [k, pieces] of byName) {
     const [type, name] = k.split('|');
     const sections = [];
@@ -209,23 +254,17 @@ export function buildWaters(osm) {
       }
       if (cur.length > 1) sections.push(cur);
     }
-    // Label each section; merge neighbours that end up with the same label.
-    const labelled = sections.map((s) => {
-      const c = centroid(s);
-      return { place: sections.length > 1 ? nearestPlace(c, 1) : null, lines: [s] };
-    });
+    // Label each section; merge sections that end up with the same label.
+    const labelled = sections.map((s) => ({ place: sections.length > 1 ? nearestPlace(centroid(s), 1) : null, lines: [s] }));
     const merged = [];
     for (const s of labelled) {
       const m = merged.find((x) => x.place === s.place);
       if (m) m.lines.push(...s.lines); else merged.push(s);
     }
     for (const s of merged) {
-      const all = s.lines.flat();
-      const [lon, lat] = centroid(all);
-      const label = s.place ? `${name} bei ${s.place}` : name;
+      const [lon, lat] = centroid(s.lines.flat());
       out.push({
-        id: uniqueId(slug(label)),
-        name: label,
+        name: s.place ? `${name} bei ${s.place}` : name,
         type,
         region: regionOf([lon, lat]),
         lat: +lat.toFixed(5), lon: +lon.toFixed(5),
@@ -234,14 +273,42 @@ export function buildWaters(osm) {
     }
   }
 
+  // Different waters with the same name: add the nearest town, then the type, then the region.
+  const groups = new Map();
+  for (const w of out) groups.set(w.name, [...(groups.get(w.name) ?? []), w]);
+  for (const [name, ws] of groups) {
+    if (ws.length < 2) continue;
+    for (const w of ws) {
+      if (w.type === 'lake' || w.type === 'oxbow') {
+        const town = nearestPlace([w.lon, w.lat], 1);
+        if (town && !name.includes(town)) w.name = `${name} bei ${town}`;
+      } else if (w.type === 'canal' && ws.some((x) => x.type === 'river')) {
+        w.name = `${name} (Kanal)`;
+      }
+    }
+  }
+  const counts = new Map();
+  for (const w of out) counts.set(w.name, (counts.get(w.name) ?? 0) + 1);
+  for (const w of out) if (counts.get(w.name) > 1) w.name = `${w.name} (${w.region})`;
+
+  // Stable ids from the final names.
+  const usedIds = new Set();
   out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
-  const regions = [...new Set(out.map((w) => w.region))].sort((a, b) => a.localeCompare(b, 'de'));
+  for (const w of out) {
+    const base = slug(w.name);
+    let id = base, n = 2;
+    while (usedIds.has(id)) id = `${base}-${n++}`;
+    usedIds.add(id);
+    w.id = id;
+  }
+  const waters = out.map(({ id, ...rest }) => ({ id, ...rest }));
+  const regions = [...new Set(waters.map((w) => w.region))].sort((a, b) => a.localeCompare(b, 'de'));
   return {
     version: 2,
     source: 'OpenStreetMap contributors (ODbL), via Overpass API',
     generated: new Date().toISOString().slice(0, 10),
     regions,
-    waters: out
+    waters
   };
 }
 
