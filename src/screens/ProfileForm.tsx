@@ -65,16 +65,16 @@ export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
       consentVersion: existing?.consentVersion ?? CONSENT_VERSION,
       consentAt: existing?.consentAt ?? new Date().toISOString()
     });
-    if (mode === 'onboarding') {
-      try {
-        await ensureAnonymous();
-      } catch (e) {
-        console.warn('Anonymous sign-in deferred', e); // offline: retried by sync
-      }
-    }
-    scheduleSync(300);
     setBusy(false);
     go(mode === 'onboarding' ? '' : 'profile', true);
+    if (mode === 'onboarding') {
+      // In the background: never block or redirect the angler while the account is created.
+      ensureAnonymous()
+        .catch((e) => console.warn('Anonymous sign-in deferred', e)) // offline: retried by sync
+        .finally(() => scheduleSync(300));
+    } else {
+      scheduleSync(300);
+    }
   };
 
   return (
