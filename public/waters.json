@@ -1,0 +1,634 @@
+{
+ "version": 1,
+ "source": "starter list (approximate points, hand-made). Replace via `npm run import:waters`.",
+ "generated": "2026-10-13",
+ "regions": [
+  "Oder & Neiße",
+  "Havel & Potsdam",
+  "Spree, Dahme & Spreewald",
+  "Märkisch-Oderland & Oder-Spree",
+  "Uckermark & Barnim",
+  "Ruppin, Oberhavel & Prignitz",
+  "Teltow-Fläming & Potsdam-Mittelmark",
+  "Lausitz",
+  "Elbe & Elster"
+ ],
+ "waters": [
+  {
+   "id": "alte-oder-freienwalde",
+   "name": "Alte Oder bei Bad Freienwalde",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.79,
+   "lon": 14.03
+  },
+  {
+   "id": "beetzsee",
+   "name": "Beetzsee",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.46,
+   "lon": 12.55
+  },
+  {
+   "id": "breitlingsee",
+   "name": "Breitlingsee",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.4,
+   "lon": 12.48
+  },
+  {
+   "id": "dahme-kw",
+   "name": "Dahme bei Königs Wusterhausen",
+   "type": "river",
+   "region": "Spree, Dahme & Spreewald",
+   "lat": 52.3,
+   "lon": 13.63
+  },
+  {
+   "id": "dosse-wusterhausen",
+   "name": "Dosse bei Wusterhausen",
+   "type": "river",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 52.89,
+   "lon": 12.46
+  },
+  {
+   "id": "elbe-muehlberg",
+   "name": "Elbe bei Mühlberg",
+   "type": "river",
+   "region": "Elbe & Elster",
+   "lat": 51.43,
+   "lon": 13.22
+  },
+  {
+   "id": "elbe-wittenberge",
+   "name": "Elbe bei Wittenberge",
+   "type": "river",
+   "region": "Elbe & Elster",
+   "lat": 52.99,
+   "lon": 11.75
+  },
+  {
+   "id": "fahrlaender-see",
+   "name": "Fahrländer See",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.47,
+   "lon": 13.01
+  },
+  {
+   "id": "finowkanal",
+   "name": "Finowkanal bei Eberswalde",
+   "type": "canal",
+   "region": "Uckermark & Barnim",
+   "lat": 52.83,
+   "lon": 13.82
+  },
+  {
+   "id": "graebendorfer-see",
+   "name": "Gräbendorfer See",
+   "type": "lake",
+   "region": "Lausitz",
+   "lat": 51.7,
+   "lon": 14.1
+  },
+  {
+   "id": "grienericksee",
+   "name": "Grienericksee (Rheinsberg)",
+   "type": "lake",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 53.1,
+   "lon": 12.89
+  },
+  {
+   "id": "grimnitzsee",
+   "name": "Grimnitzsee",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 52.97,
+   "lon": 13.78
+  },
+  {
+   "id": "grosser-muellroser-see",
+   "name": "Großer Müllroser See",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.25,
+   "lon": 14.42
+  },
+  {
+   "id": "seddiner-see",
+   "name": "Großer Seddiner See",
+   "type": "lake",
+   "region": "Teltow-Fläming & Potsdam-Mittelmark",
+   "lat": 52.27,
+   "lon": 13.02
+  },
+  {
+   "id": "grosser-stechlinsee",
+   "name": "Großer Stechlinsee",
+   "type": "lake",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 53.15,
+   "lon": 13.03
+  },
+  {
+   "id": "grosser-wuensdorfer-see",
+   "name": "Großer Wünsdorfer See",
+   "type": "lake",
+   "region": "Teltow-Fläming & Potsdam-Mittelmark",
+   "lat": 52.17,
+   "lon": 13.46
+  },
+  {
+   "id": "grosser-zernsee",
+   "name": "Großer Zernsee",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.4,
+   "lon": 12.93
+  },
+  {
+   "id": "grossraeschener-see",
+   "name": "Großräschener See",
+   "type": "lake",
+   "region": "Lausitz",
+   "lat": 51.57,
+   "lon": 14.02
+  },
+  {
+   "id": "gudelacksee",
+   "name": "Gudelacksee (Lindow)",
+   "type": "lake",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 52.97,
+   "lon": 12.97
+  },
+  {
+   "id": "guelper-see",
+   "name": "Gülper See",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.74,
+   "lon": 12.24
+  },
+  {
+   "id": "havel-brandenburg",
+   "name": "Havel bei Brandenburg an der Havel",
+   "type": "river",
+   "region": "Havel & Potsdam",
+   "lat": 52.41,
+   "lon": 12.55
+  },
+  {
+   "id": "havel-havelberg",
+   "name": "Havel bei Havelberg",
+   "type": "river",
+   "region": "Havel & Potsdam",
+   "lat": 52.83,
+   "lon": 12.07
+  },
+  {
+   "id": "havel-oranienburg",
+   "name": "Havel bei Oranienburg",
+   "type": "river",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 52.75,
+   "lon": 13.24
+  },
+  {
+   "id": "havel-potsdam",
+   "name": "Havel bei Potsdam",
+   "type": "river",
+   "region": "Havel & Potsdam",
+   "lat": 52.4,
+   "lon": 13.06
+  },
+  {
+   "id": "havel-rathenow",
+   "name": "Havel bei Rathenow",
+   "type": "river",
+   "region": "Havel & Potsdam",
+   "lat": 52.6,
+   "lon": 12.33
+  },
+  {
+   "id": "havel-zehdenick",
+   "name": "Havel bei Zehdenick",
+   "type": "river",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 52.98,
+   "lon": 13.33
+  },
+  {
+   "id": "helenesee",
+   "name": "Helenesee",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.28,
+   "lon": 14.48
+  },
+  {
+   "id": "hofriwa",
+   "name": "Hohensaaten-Friedrichsthaler Wasserstraße",
+   "type": "canal",
+   "region": "Oder & Neiße",
+   "lat": 53,
+   "lon": 14.2
+  },
+  {
+   "id": "kruepelsee",
+   "name": "Krüpelsee",
+   "type": "lake",
+   "region": "Spree, Dahme & Spreewald",
+   "lat": 52.3,
+   "lon": 13.68
+  },
+  {
+   "id": "lehnitzsee",
+   "name": "Lehnitzsee",
+   "type": "lake",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 52.77,
+   "lon": 13.27
+  },
+  {
+   "id": "liepnitzsee",
+   "name": "Liepnitzsee",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 52.73,
+   "lon": 13.5
+  },
+  {
+   "id": "luebbesee",
+   "name": "Lübbesee (Templin)",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 53.06,
+   "lon": 13.53
+  },
+  {
+   "id": "mellensee",
+   "name": "Mellensee",
+   "type": "lake",
+   "region": "Teltow-Fläming & Potsdam-Mittelmark",
+   "lat": 52.15,
+   "lon": 13.4
+  },
+  {
+   "id": "neisse-forst",
+   "name": "Neiße bei Forst",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 51.74,
+   "lon": 14.65
+  },
+  {
+   "id": "neisse-guben",
+   "name": "Neiße bei Guben",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 51.95,
+   "lon": 14.72
+  },
+  {
+   "id": "oberuckersee",
+   "name": "Oberuckersee",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 53.2,
+   "lon": 13.86
+  },
+  {
+   "id": "oder-eisenhuettenstadt",
+   "name": "Oder bei Eisenhüttenstadt",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.152,
+   "lon": 14.683
+  },
+  {
+   "id": "oder-frankfurt",
+   "name": "Oder bei Frankfurt (Oder)",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.345,
+   "lon": 14.556
+  },
+  {
+   "id": "oder-gartz",
+   "name": "Oder bei Gartz",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 53.208,
+   "lon": 14.405
+  },
+  {
+   "id": "oder-hohensaaten",
+   "name": "Oder bei Hohensaaten",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.876,
+   "lon": 14.15
+  },
+  {
+   "id": "oder-kuestrin",
+   "name": "Oder bei Küstrin-Kietz",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.573,
+   "lon": 14.633
+  },
+  {
+   "id": "oder-lebus",
+   "name": "Oder bei Lebus",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.428,
+   "lon": 14.538
+  },
+  {
+   "id": "oder-ratzdorf",
+   "name": "Oder bei Ratzdorf (Neißemündung)",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.067,
+   "lon": 14.755
+  },
+  {
+   "id": "oder-schwedt",
+   "name": "Oder bei Schwedt",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 53.058,
+   "lon": 14.335
+  },
+  {
+   "id": "oder-zollbruecke",
+   "name": "Oder bei Zollbrücke (Oderbruch)",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 52.737,
+   "lon": 14.245
+  },
+  {
+   "id": "oder-havel-kanal",
+   "name": "Oder-Havel-Kanal bei Niederfinow",
+   "type": "canal",
+   "region": "Uckermark & Barnim",
+   "lat": 52.85,
+   "lon": 13.94
+  },
+  {
+   "id": "oder-spree-kanal",
+   "name": "Oder-Spree-Kanal",
+   "type": "canal",
+   "region": "Oder & Neiße",
+   "lat": 52.15,
+   "lon": 14.62
+  },
+  {
+   "id": "parsteiner-see",
+   "name": "Parsteiner See",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 52.93,
+   "lon": 13.99
+  },
+  {
+   "id": "plauer-see-bb",
+   "name": "Plauer See (Brandenburg an der Havel)",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.42,
+   "lon": 12.45
+  },
+  {
+   "id": "plessower-see",
+   "name": "Plessower See",
+   "type": "lake",
+   "region": "Teltow-Fläming & Potsdam-Mittelmark",
+   "lat": 52.37,
+   "lon": 12.88
+  },
+  {
+   "id": "rangsdorfer-see",
+   "name": "Rangsdorfer See",
+   "type": "lake",
+   "region": "Teltow-Fläming & Potsdam-Mittelmark",
+   "lat": 52.28,
+   "lon": 13.42
+  },
+  {
+   "id": "rhin-fehrbellin",
+   "name": "Rhin bei Fehrbellin",
+   "type": "river",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 52.81,
+   "lon": 12.76
+  },
+  {
+   "id": "rietzer-see",
+   "name": "Rietzer See",
+   "type": "lake",
+   "region": "Teltow-Fläming & Potsdam-Mittelmark",
+   "lat": 52.37,
+   "lon": 12.66
+  },
+  {
+   "id": "ruppiner-see",
+   "name": "Ruppiner See",
+   "type": "lake",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 52.88,
+   "lon": 12.82
+  },
+  {
+   "id": "sacrower-see",
+   "name": "Sacrower See",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.44,
+   "lon": 13.1
+  },
+  {
+   "id": "scharmuetzelsee",
+   "name": "Scharmützelsee",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.23,
+   "lon": 14.05
+  },
+  {
+   "id": "schermuetzelsee",
+   "name": "Schermützelsee (Buckow)",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.58,
+   "lon": 14.07
+  },
+  {
+   "id": "schwarze-elster",
+   "name": "Schwarze Elster bei Bad Liebenwerda",
+   "type": "river",
+   "region": "Elbe & Elster",
+   "lat": 51.52,
+   "lon": 13.4
+  },
+  {
+   "id": "schwielochsee",
+   "name": "Schwielochsee",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.05,
+   "lon": 14.2
+  },
+  {
+   "id": "schwielowsee",
+   "name": "Schwielowsee",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.335,
+   "lon": 12.95
+  },
+  {
+   "id": "senftenberger-see",
+   "name": "Senftenberger See",
+   "type": "lake",
+   "region": "Lausitz",
+   "lat": 51.49,
+   "lon": 14.03
+  },
+  {
+   "id": "spree-beeskow",
+   "name": "Spree bei Beeskow",
+   "type": "river",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.17,
+   "lon": 14.25
+  },
+  {
+   "id": "spree-cottbus",
+   "name": "Spree bei Cottbus",
+   "type": "river",
+   "region": "Spree, Dahme & Spreewald",
+   "lat": 51.76,
+   "lon": 14.34
+  },
+  {
+   "id": "spree-fuerstenwalde",
+   "name": "Spree bei Fürstenwalde",
+   "type": "river",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.36,
+   "lon": 14.06
+  },
+  {
+   "id": "spree-luebben",
+   "name": "Spree bei Lübben (Spreewald)",
+   "type": "river",
+   "region": "Spree, Dahme & Spreewald",
+   "lat": 51.94,
+   "lon": 13.89
+  },
+  {
+   "id": "stepenitz-perleberg",
+   "name": "Stepenitz bei Perleberg",
+   "type": "river",
+   "region": "Ruppin, Oberhavel & Prignitz",
+   "lat": 53.07,
+   "lon": 11.86
+  },
+  {
+   "id": "storkower-see",
+   "name": "Storkower See",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.24,
+   "lon": 13.97
+  },
+  {
+   "id": "straussee",
+   "name": "Straussee",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.58,
+   "lon": 13.88
+  },
+  {
+   "id": "templiner-see-potsdam",
+   "name": "Templiner See (Potsdam)",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.36,
+   "lon": 13.02
+  },
+  {
+   "id": "unteruckersee",
+   "name": "Unteruckersee",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 53.3,
+   "lon": 13.86
+  },
+  {
+   "id": "wandlitzer-see",
+   "name": "Wandlitzer See",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 52.74,
+   "lon": 13.45
+  },
+  {
+   "id": "werbellinsee",
+   "name": "Werbellinsee",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 52.94,
+   "lon": 13.73
+  },
+  {
+   "id": "westoder",
+   "name": "Westoder (Nationalpark Unteres Odertal)",
+   "type": "river",
+   "region": "Oder & Neiße",
+   "lat": 53.15,
+   "lon": 14.36
+  },
+  {
+   "id": "wolletzsee",
+   "name": "Wolletzsee",
+   "type": "lake",
+   "region": "Uckermark & Barnim",
+   "lat": 53.03,
+   "lon": 13.97
+  },
+  {
+   "id": "wolziger-see",
+   "name": "Wolziger See",
+   "type": "lake",
+   "region": "Märkisch-Oderland & Oder-Spree",
+   "lat": 52.25,
+   "lon": 13.83
+  },
+  {
+   "id": "wusterwitzer-see",
+   "name": "Wusterwitzer See",
+   "type": "lake",
+   "region": "Havel & Potsdam",
+   "lat": 52.38,
+   "lon": 12.38
+  },
+  {
+   "id": "zeuthener-see",
+   "name": "Zeuthener See",
+   "type": "lake",
+   "region": "Spree, Dahme & Spreewald",
+   "lat": 52.34,
+   "lon": 13.63
+  }
+ ]
+}
