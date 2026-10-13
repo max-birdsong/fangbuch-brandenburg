@@ -1,0 +1,12 @@
+Querying Overpass for Brandenburg waters (4 requests, can take several minutes)...
+  lakes: 3351 elements from https://overpass-api.de/api/interpreter in 21 s (13.6 MB)
+  rivers: 1868 elements from https://overpass-api.de/api/interpreter in 14 s (4.0 MB)
+  places: 1895 elements from https://overpass-api.de/api/interpreter in 25 s (0.5 MB)
+  counties: attempt 1 at https://overpass-api.de/api/interpreter failed: HTTP 504: <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xhtml" xml:
+  counties: attempt 2 at https://overpass.kumi.systems/api/interpreter failed: HTTP 504: <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xhtml" xml:
+  counties: attempt 3 at https://overpass.private.coffee/api/interpreter failed: HTTP 504: <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xhtml" xml:
+  counties: attempt 4 at https://overpass-api.de/api/interpreter failed: HTTP 504: <?xml version="1.0" encoding="UTF-8"?> <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xhtml" xml:
+  counties: 0 elements from https://overpass.kumi.systems/api/interpreter in 248 s (0.0 MB)
+  counties: 0 ()
+  removed 16 duplicates
+Wrote 1938 waters ({"lake":1109,"canal":344,"river":482,"oxbow":3}), 1.0 MB
