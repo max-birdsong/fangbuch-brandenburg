@@ -283,7 +283,13 @@ export function buildWaters(osm) {
       if (cur.length > 1) sections.push(cur);
     }
     // Label each section; merge sections that end up with the same label.
-    const labelled = sections.map((s) => ({ place: sections.length > 1 ? nearestPlace(centroid(s), 1) : null, lines: [s] }));
+    // Name sections after the nearest town (what anglers search for) if one is within 10 km, else the nearest village.
+    const label = (c) => {
+      const town = nearestPlace(c, 2);
+      const tp = town && places.find((p) => p.name === town && p.rank >= 2);
+      return tp && metres(c, tp.xy) < 10_000 ? town : nearestPlace(c, 1);
+    };
+    const labelled = sections.map((s) => ({ place: sections.length > 1 ? label(centroid(s)) : null, lines: [s] }));
     const merged = [];
     for (const s of labelled) {
       const m = merged.find((x) => x.place === s.place);
