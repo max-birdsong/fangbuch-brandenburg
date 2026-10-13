@@ -28,6 +28,7 @@ jobs:
             echo "Overpass attempt $i failed, retrying in 60s"; sleep 60
           done
           test -s public/waters.json
+          grep -q 'OpenStreetMap' public/waters.json || (echo 'waters.json was not regenerated' && exit 1)
       - name: Summary
         run: |
           node -e "const w=require('./public/waters.json'); const c={}; for (const x of w.waters) c[x.type]=(c[x.type]||0)+1; console.log(w.waters.length,'waters',JSON.stringify(c),'regions:',w.regions.length)"
