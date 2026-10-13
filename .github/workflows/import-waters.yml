@@ -31,9 +31,8 @@ jobs:
           node-version: 22
       - name: Import from Overpass
         run: |
-          node scripts/import-waters.mjs --min-ha=${{ inputs.min_ha || '5' }} --section-km=${{ inputs.section_km || '10' }} \
-            || (echo "Main Overpass server failed, trying mirror" && sleep 30 && \
-                node scripts/import-waters.mjs --min-ha=${{ inputs.min_ha || '5' }} --section-km=${{ inputs.section_km || '10' }} --endpoint=https://overpass.kumi.systems/api/interpreter)
+          set -o pipefail
+          node --max-old-space-size=6144 scripts/import-waters.mjs --min-ha=${{ inputs.min_ha || '5' }} --section-km=${{ inputs.section_km || '10' }} 2>&1 | tee import-log.txt
       - name: Summary
         run: |
           node -e '
@@ -43,6 +42,13 @@ jobs:
             require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
             console.log(lines.join("\n"));
           '
+      - name: Save log to branch on failure
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p logs && cp import-log.txt logs/import-log.txt 2>/dev/null || echo "no log" > logs/import-log.txt
+          git add logs/import-log.txt && git commit -m "Import log (failed run)" && git push
       - name: Commit result
         run: |
           git config user.name "github-actions[bot]"
