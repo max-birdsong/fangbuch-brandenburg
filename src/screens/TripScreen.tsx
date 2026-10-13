@@ -38,7 +38,7 @@ export function TripScreen({ id }: { id: string }) {
   };
 
   // One tap = one released fish of that species, with an undo.
-  const quickSpecies = [...new Set([...trip.targets.filter((c) => SPECIES.some((x) => x.code === c)), ...QUICK_SPECIES])].slice(0, 8);
+  const quickSpecies = [...new Set([...trip.targets.filter((c) => SPECIES.some((x) => x.code === c)), ...QUICK_SPECIES])].slice(0, 9);
   const quickLog = async (species: string) => {
     const cid = uuid();
     await saveCatch({ id: cid, tripId: id, species, count: 1, lengthCm: null, kept: false, caughtAt: new Date().toISOString(), deleted: false });
@@ -84,9 +84,20 @@ export function TripScreen({ id }: { id: string }) {
               {quickSpecies.map((c) => (
                 <button key={c} type="button" className="tile" onClick={() => void quickLog(c)}>{label(SPECIES, c, lang)}</button>
               ))}
-              <a className="tile more" href={`#/trip/${id}/catch`}>{t('otherShort')}</a>
             </div>
-            <a className="link-btn" href={`#/trip/${id}/catch`}>{t('withDetails')}</a>
+            <select
+              aria-label={t('chooseSpecies')}
+              value=""
+              onChange={(e) => {
+                if (e.target.value) void quickLog(e.target.value);
+                e.target.value = '';
+              }}
+            >
+              <option value="">{t('chooseSpecies')}</option>
+              {SPECIES.filter((x) => !quickSpecies.includes(x.code)).map((x) => (
+                <option key={x.code} value={x.code}>{x[lang]}</option>
+              ))}
+            </select>
           </section>
         )}
         <div className="row between baseline">
