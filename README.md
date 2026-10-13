@@ -9,10 +9,7 @@ Status: **proof of concept / pilot**. Licensed to IfB, all rights reserved.
 - Installable web app (PWA): works on any phone from the browser, can be added to the home screen, **works offline** at the water and syncs later.
 - No login needed to start. Anglers can later secure their log with an email address (6-digit code, no password), which also lets them restore it on a new phone.
 - One-time profile: years fishing, home postcode (no address), club membership and club name, Fischereischein, licenses.
-- Fishing day ("Angeltag"): water body, method, shore/boat/wading, target species. Log live, or add a past day afterwards.
-- Catches, two ways: one tap per fish during the day (species, released; details optional), and/or an end-of-trip report with released/kept counters per species. Entries with lengths are kept when the report changes counts.
-- Forgotten trips: a live fishing day running over 10 hours asks when the angler actually stopped, so effort (hours) stays realistic.
-- Satisfaction (1 to 5) at the end of each day.
+- One form per fishing day, filled in at the water or afterwards: water body, date and from–to time, method / shore or boat / target species (remembered from last time), catch per species as released and kept counts with optional lengths, satisfaction 1 to 5. No catch = leave the catch list empty. Tapping a past day opens the same form to edit it.
 - Optional baseline survey (age, avidity, skill, centrality/attraction, motivations, catch orientation, Oder questions), offered after the first fishing day. Answers save as you go and can be resumed.
 - Water picker: nearest water via GPS (computed on the phone, coordinates are never stored), recently visited, search, by region, or free text.
 - German and English. Polish can be added in `src/i18n.ts`.
