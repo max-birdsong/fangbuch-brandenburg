@@ -181,6 +181,7 @@ const de = {
   surveyEdit: 'Antworten ansehen',
   pleaseChoose: 'Bitte wählen',
 
+  dashboard: 'Auswertung',
   privacyTitle: 'Datenschutz',
   privacyDraft: 'Entwurf, noch mit dem Datenschutzbeauftragten abzustimmen.',
   privacyBody: [
@@ -375,6 +376,7 @@ const en: Record<StringKey, string> = {
   surveyEdit: 'View answers',
   pleaseChoose: 'Please choose',
 
+  dashboard: 'Dashboard',
   privacyTitle: 'Privacy',
   privacyDraft: 'Draft, still to be agreed with the data protection officer.',
   privacyBody: [

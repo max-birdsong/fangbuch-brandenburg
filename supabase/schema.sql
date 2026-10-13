@@ -121,6 +121,33 @@ create policy "own survey responses" on public.survey_responses
   for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+-- ---------------------------------------------------------------- research admins
+-- Accounts listed here can read ALL anglers' data (for the in-app dashboard at #/admin).
+-- Add yourself after securing your account with email in the app:
+--   insert into public.admins (user_id) select id from auth.users where email = 'you@example.org';
+create table if not exists public.admins (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table public.admins enable row level security;
+revoke all on public.admins from anon, authenticated;
+
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.admins where user_id = auth.uid());
+$$;
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+
+drop policy if exists "admins read profiles" on public.profiles;
+create policy "admins read profiles" on public.profiles for select to authenticated using (public.is_admin());
+drop policy if exists "admins read trips" on public.trips;
+create policy "admins read trips" on public.trips for select to authenticated using (public.is_admin());
+drop policy if exists "admins read catches" on public.catches;
+create policy "admins read catches" on public.catches for select to authenticated using (public.is_admin());
+drop policy if exists "admins read survey responses" on public.survey_responses;
+create policy "admins read survey responses" on public.survey_responses for select to authenticated using (public.is_admin());
+
 -- ---------------------------------------------------------------- updated_at trigger
 create or replace function public.touch_updated_at() returns trigger
 language plpgsql as $$
