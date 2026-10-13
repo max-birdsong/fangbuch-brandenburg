@@ -3,6 +3,7 @@ import { useLang } from '../app';
 import { TopBar } from '../components/ui';
 import { ChartCard, Columns, DataTable, DotScale, HBars, StackedHBars } from '../components/charts';
 import { loadAdminData, type AdminData } from '../lib/admin';
+import { exampleData } from '../lib/demoData';
 import { byWater, bySpecies, hoursOf, kpis, surveyMotives, surveyScales, surveyWide, weekly } from '../lib/stats';
 import { downloadText, toCSV } from '../lib/util';
 
@@ -13,12 +14,13 @@ export function Admin() {
   const [data, setData] = useState<AdminData | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [example, setExample] = useState(false);
 
   const load = useCallback(async () => {
     setBusy(true);
     setErr(null);
     try {
-      setData(await loadAdminData());
+      setData(example ? exampleData() : await loadAdminData());
     } catch (e) {
       console.warn(e);
       setErr(L('Daten konnten nicht geladen werden.', 'Could not load data.'));
@@ -26,7 +28,7 @@ export function Admin() {
       setBusy(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang]);
+  }, [lang, example]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -73,10 +75,20 @@ export function Admin() {
       <TopBar title={L('Auswertung', 'Dashboard')} backTo="profile" />
       <div className="content stack">
         <div className={`source-note ${data.source}`}>
-          {data.source === 'all'
-            ? <>{L('Alle Angler', 'All anglers')} · {L('Stand', 'as of')} {data.loadedAt.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}</>
-            : L('Nur die Daten auf diesem Gerät. Als Admin angemeldet siehst du hier alle Angler.', 'Only the data on this device. Signed in as an admin you see all anglers here.')}
-          <button className="btn small secondary" disabled={busy} onClick={() => void load()}>{L('Aktualisieren', 'Refresh')}</button>
+          <span>
+            {data.source === 'all'
+              ? <>{L('Alle Angler', 'All anglers')} · {L('Stand', 'as of')} {data.loadedAt.toLocaleTimeString(lang === 'de' ? 'de-DE' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}</>
+              : data.source === 'example'
+                ? L('Beispieldaten: ausgedacht, nicht gespeichert.', 'Example data: made up, not saved.')
+                : L('Nur die Daten auf diesem Gerät. Als Admin angemeldet siehst du hier alle Angler.', 'Only the data on this device. Signed in as an admin you see all anglers here.')}
+          </span>
+          <span className="row gap">
+            <label className="check small">
+              <input type="checkbox" checked={example} onChange={(e) => setExample(e.target.checked)} />
+              {L('Beispieldaten', 'Example data')}
+            </label>
+            {!example && <button className="btn small secondary" disabled={busy} onClick={() => void load()}>{L('Aktualisieren', 'Refresh')}</button>}
+          </span>
         </div>
         {err && <p className="error" role="alert">{err}</p>}
 
@@ -158,7 +170,7 @@ export function Admin() {
           <DotScale label={L('Motive', 'Motivations')} rows={motives} lowText={L('überhaupt nicht wichtig', 'not at all important')} highText={L('extrem wichtig', 'extremely important')} />
         </ChartCard>
 
-        <section className="card stack-sm">
+        {data.source !== 'example' && <section className="card stack-sm">
           <h2 className="viz-title">{L('Daten herunterladen', 'Download data')}</h2>
           <p className="muted small">{L('CSV mit Semikolon, Angler nur als pseudonyme ID.', 'Semicolon CSV, anglers only as pseudonymous IDs.')}</p>
           <div className="row gap wrap">
@@ -166,7 +178,7 @@ export function Admin() {
             <button className="btn secondary small" onClick={exportCatches}>{L('Fänge', 'Catches')}</button>
             <button className="btn secondary small" onClick={exportSurvey}>{L('Umfrage', 'Survey')}</button>
           </div>
-        </section>
+        </section>}
       </div>
     </main>
   );

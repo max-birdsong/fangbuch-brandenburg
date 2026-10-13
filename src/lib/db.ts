@@ -159,10 +159,54 @@ export async function patchSurvey(surveyId: string, fn: (r: SurveyResponse) => S
  * Existing entries are kept where possible: extra fish become a new entry without length;
  * fewer fish are taken from entries without a length first, so measured fish survive.
  */
-export async function applyReport(tripId: string, target: { species: string; kept: boolean; count: number }[], caughtAt: string | null) {
+export async function applyReport(
+  tripId: string,
+  target: { species: string; kept: boolean; count: number }[],
+  caughtAt: string | null,
+  lengths: { species: string; kept: boolean; lengthCm: number }[] = []
+) {
   await db.transaction('rw', db.catches, async () => {
-    const rows = (await db.catches.where('tripId').equals(tripId).toArray()).filter((c) => !c.deleted);
     const now = Date.now();
+    // 1) Measured fish: keep existing measurements that are still listed, drop the others,
+    //    and give new lengths to unmeasured fish of the same species and fate (or add fish).
+    const all = (await db.catches.where('tripId').equals(tripId).toArray()).filter((c) => !c.deleted);
+    const lkey = (sp: string, kept: boolean) => `${sp}|${kept ? 1 : 0}`;
+    const wanted = new Map<string, number[]>();
+    for (const l of lengths) wanted.set(lkey(l.species, l.kept), [...(wanted.get(lkey(l.species, l.kept)) ?? []), l.lengthCm]);
+    const groupKeys = new Set([...wanted.keys(), ...all.filter((c) => c.lengthCm !== null).map((c) => lkey(c.species, c.kept))]);
+    for (const k of groupKeys) {
+      const [species, keptFlag] = k.split('|');
+      const kept = keptFlag === '1';
+      const D = [...(wanted.get(k) ?? [])];
+      const group = all.filter((c) => lkey(c.species, c.kept) === k);
+      for (const r of group.filter((c) => c.lengthCm !== null)) {
+        let keep = 0;
+        for (let i = 0; i < r.count; i++) {
+          const j = D.indexOf(r.lengthCm!);
+          if (j < 0) break;
+          D.splice(j, 1);
+          keep++;
+        }
+        if (keep === 0) await db.catches.update(r.id, { deleted: true, dirty: 1, updatedAt: now });
+        else if (keep < r.count) await db.catches.update(r.id, { count: keep, dirty: 1, updatedAt: now });
+      }
+      const unmeasured = group.filter((c) => c.lengthCm === null).map((c) => ({ ...c }));
+      for (const L of D) {
+        const u = unmeasured.find((c) => c.count > 0);
+        if (u && u.count === 1) {
+          await db.catches.update(u.id, { lengthCm: L, dirty: 1, updatedAt: now });
+          u.count = 0;
+        } else {
+          if (u) {
+            u.count -= 1;
+            await db.catches.update(u.id, { count: u.count, dirty: 1, updatedAt: now });
+          }
+          await db.catches.put({ id: uuid(), tripId, species, count: 1, lengthCm: L, kept, caughtAt: u?.caughtAt ?? caughtAt, deleted: false, dirty: 1, updatedAt: now });
+        }
+      }
+    }
+    // 2) Counts per species x fate.
+    const rows = (await db.catches.where('tripId').equals(tripId).toArray()).filter((c) => !c.deleted);
     const key = (sp: string, kept: boolean) => `${sp}|${kept ? 1 : 0}`;
     const want = new Map(target.map((t) => [key(t.species, t.kept), t.count]));
     const groups = new Map<string, Catch[]>();
