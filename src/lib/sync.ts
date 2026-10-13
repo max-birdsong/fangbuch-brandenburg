@@ -1,7 +1,8 @@
 // Background sync between the local database and Supabase.
 // Push: upload rows with dirty = 1 (profile, then trips, then catches, because catches reference trips).
 // Pull: after signing in on a new device, download the angler's existing entries.
-import { db, getKV, setKV, wipeLocal, type Catch, type Profile, type Trip } from './db';
+import { db, getKV, setKV, surveyKey, wipeLocal, type Catch, type Profile, type SurveyResponse, type Trip } from './db';
+import { SURVEY } from '../data/survey';
 import { supabase } from './supabase';
 
 type Listener = (s: SyncState) => void;
@@ -60,7 +61,6 @@ const profileToRow = (p: Profile, userId: string, lang: string) => ({
   has_fishing_exam: p.hasFishingExam,
   licenses: p.licenses,
   licenses_other: p.licensesOther || null,
-  lottery_opt_in: p.lotteryOptIn,
   consent_version: p.consentVersion,
   consent_at: p.consentAt
 });
@@ -76,12 +76,13 @@ async function markClean<T extends { id: string; updatedAt: number }>(table: 'tr
 }
 
 export async function pendingCount() {
-  const [t, c, p] = await Promise.all([
+  const [t, c, p, s] = await Promise.all([
     db.trips.where('dirty').equals(1).count(),
     db.catches.where('dirty').equals(1).count(),
-    getKV<Profile | null>('profile', null)
+    getKV<Profile | null>('profile', null),
+    getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null)
   ]);
-  return t + c + (p?.dirty ? 1 : 0);
+  return t + c + (p?.dirty ? 1 : 0) + (s?.dirty ? 1 : 0);
 }
 
 export async function syncNow(): Promise<void> {
@@ -123,6 +124,25 @@ export async function syncNow(): Promise<void> {
       if (error) throw error;
       await markClean('catches', catches);
     }
+
+    const survey = await getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null);
+    if (survey?.dirty) {
+      const { error } = await supabase.from('survey_responses').upsert(
+        {
+          id: survey.id,
+          user_id: userId,
+          survey_id: survey.surveyId,
+          survey_version: survey.version,
+          answers: survey.answers,
+          started_at: survey.startedAt,
+          completed_at: survey.completedAt
+        },
+        { onConflict: 'user_id,survey_id' }
+      );
+      if (error) throw error;
+      const cur = await getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null);
+      if (cur && cur.updatedAt === survey.updatedAt) await setKV(surveyKey(SURVEY.id), { ...cur, dirty: 0 });
+    }
     emit({ running: false, lastOk: Date.now() });
   } catch (e) {
     console.warn('Sync failed', e);
@@ -137,11 +157,30 @@ export async function pullAll(): Promise<void> {
   const userId = sess.session?.user.id;
   if (!userId) return;
 
-  const [{ data: p }, { data: trips }, { data: catches }] = await Promise.all([
+  const [{ data: p }, { data: trips }, { data: catches }, { data: survey }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
     supabase.from('trips').select('*').eq('deleted', false),
-    supabase.from('catches').select('*').eq('deleted', false)
+    supabase.from('catches').select('*').eq('deleted', false),
+    supabase.from('survey_responses').select('*').eq('survey_id', SURVEY.id).maybeSingle()
   ]);
+
+  if (survey) {
+    const local = await getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null);
+    if (!local?.dirty) {
+      await setKV(surveyKey(SURVEY.id), {
+        id: survey.id,
+        surveyId: survey.survey_id,
+        version: survey.survey_version,
+        answers: survey.answers ?? {},
+        page: survey.completed_at ? 0 : local?.page ?? 0,
+        startedAt: survey.started_at,
+        completedAt: survey.completed_at,
+        snoozedUntil: local?.snoozedUntil ?? null,
+        dirty: 0,
+        updatedAt: Date.now()
+      } satisfies SurveyResponse);
+    }
+  }
 
   if (p) {
     const local = await getKV<Profile | null>('profile', null);
@@ -155,7 +194,6 @@ export async function pullAll(): Promise<void> {
         hasFishingExam: p.has_fishing_exam,
         licenses: p.licenses ?? [],
         licensesOther: p.licenses_other ?? '',
-        lotteryOptIn: p.lottery_opt_in,
         consentVersion: p.consent_version,
         consentAt: p.consent_at,
         dirty: 0,

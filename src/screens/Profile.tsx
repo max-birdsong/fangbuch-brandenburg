@@ -3,11 +3,11 @@ import { go, useConfirm, useLang } from '../app';
 import { BottomNav } from '../components/ui';
 import { LangSwitch } from '../components/LangSwitch';
 import { CLUB_STATUS, COUNTRIES, LICENSES, METHODS, PLATFORMS, SPECIES, label } from '../data/catalog';
-import { db, saveProfile } from '../lib/db';
+import { db } from '../lib/db';
 import { deleteAccount, signOut, useSession } from '../lib/auth';
-import { useProfile, usePending, useSyncState } from '../lib/hooks';
+import { useProfile, usePending, useSurvey, useSyncState } from '../lib/hooks';
 import { isDemo } from '../lib/supabase';
-import { scheduleSync, syncNow } from '../lib/sync';
+import { syncNow } from '../lib/sync';
 import { downloadText, toCSV } from '../lib/util';
 
 export function Profile() {
@@ -17,6 +17,7 @@ export function Profile() {
   const { session } = useSession();
   const pending = usePending();
   const sync = useSyncState();
+  const survey = useSurvey();
   const [err, setErr] = useState<string | null>(null);
   if (profile === undefined) return <main className="screen with-nav" />;
 
@@ -98,22 +99,7 @@ export function Profile() {
           <div className="card stack-sm">
             <span className="strong">{t('account')}</span>
             {email && !isAnon ? (
-              <>
-                <span className="muted small">{t('accountLinked', { email })}</span>
-                {profile && (
-                  <label className="check">
-                    <input
-                      type="checkbox"
-                      checked={profile.lotteryOptIn}
-                      onChange={(e) => {
-                        const { dirty: _d, updatedAt: _u, ...rest } = profile;
-                        void saveProfile({ ...rest, lotteryOptIn: e.target.checked }).then(() => scheduleSync());
-                      }}
-                    />
-                    {t('lottery')}
-                  </label>
-                )}
-              </>
+              <span className="muted small">{t('accountLinked', { email })}</span>
             ) : (
               <>
                 <span className="muted small">{t('accountAnon')}</span>
@@ -124,6 +110,13 @@ export function Profile() {
               {t('syncNow')}{pending ? ` (${pending})` : ''}
             </button>
           </div>
+        )}
+
+        {survey && (
+          <a className="card row between" href="#/survey">
+            <span className="strong">{survey.completedAt ? t('surveyDone') : t('surveyOpen')}</span>
+            <span className="teal small strong">{survey.completedAt ? t('surveyEdit') : t('surveyResume')}</span>
+          </a>
         )}
 
         <button className="btn secondary" onClick={() => void exportCsv()}>{t('exportData')}</button>

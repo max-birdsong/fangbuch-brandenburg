@@ -15,8 +15,7 @@ const EMPTY: Draft = {
   clubName: '',
   hasFishingExam: null,
   licenses: [],
-  licensesOther: '',
-  lotteryOptIn: false
+  licensesOther: ''
 };
 
 const postcodeOk = (country: Draft['homeCountry'], pc: string) => {
