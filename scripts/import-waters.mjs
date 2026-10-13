@@ -135,6 +135,9 @@ function joinChains(pieces) {
 }
 
 const geomOf = (g) => (g ?? []).map((p) => [p.lon, p.lat]);
+// Prefer the German name (OSM often has bilingual names like "Oder/Odra" or "Cottbus - Chóśebuz").
+const key2 = ([lon, lat]) => `${lon.toFixed(6)},${lat.toFixed(6)}`;
+const nameOf = (tags) => (tags['name:de'] || tags.name || '').trim();
 const slug = (s) => s.toLowerCase()
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -147,15 +150,16 @@ export function buildWaters(osm) {
   const counties = els
     .filter((e) => e.type === 'relation' && e.tags?.boundary === 'administrative' && e.tags?.admin_level === '6')
     .map((r) => ({
-      name: r.tags.name,
+      name: nameOf(r.tags),
       rings: joinChains((r.members ?? []).filter((m) => m.role === 'outer' && m.geometry).map((m) => geomOf(m.geometry)))
         .filter((c) => c.length > 3)
     }));
+  console.log(`  counties: ${counties.length} (${counties.map((c) => `${c.name}: ${c.rings.length} rings, ${c.rings.filter((r) => key2(r[0]) === key2(r[r.length - 1])).length} closed`).join('; ')})`);
   const regionOf = (pt) => counties.find((c) => c.rings.some((ring) => pointInRing(pt, ring)))?.name ?? 'Brandenburg';
 
   const places = els
     .filter((e) => e.type === 'node' && e.tags?.place)
-    .map((n) => ({ name: n.tags.name, rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
+    .map((n) => ({ name: nameOf(n.tags), rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
   const nearestPlace = (pt, minRank = 1) => {
     const f = toXY(pt[1]);
     const p = f(pt);
@@ -193,8 +197,8 @@ export function buildWaters(osm) {
     const main = rings.slice().sort((a, b) => ringAreaHa(b) - ringAreaHa(a))[0];
     const [lon, lat] = centroid(main);
     out.push({
-      id: uniqueId(slug(e.tags.name)),
-      name: e.tags.name,
+      id: uniqueId(slug(nameOf(e.tags))),
+      name: nameOf(e.tags),
       type: wt === 'oxbow' ? 'oxbow' : 'lake',
       region: regionOf([lon, lat]),
       lat: +lat.toFixed(5), lon: +lon.toFixed(5),
@@ -207,7 +211,7 @@ export function buildWaters(osm) {
   const byName = new Map();
   for (const e of els) {
     if (e.type !== 'way' || !['river', 'canal'].includes(e.tags?.waterway) || !e.tags?.name) continue;
-    const k = `${e.tags.waterway}|${e.tags.name}`;
+    const k = `${e.tags.waterway}|${nameOf(e.tags)}`;
     if (!byName.has(k)) byName.set(k, []);
     byName.get(k).push(geomOf(e.geometry));
   }
@@ -253,6 +257,20 @@ export function buildWaters(osm) {
     }
   }
 
+  // Drop duplicates (same water mapped twice, e.g. as a way and as a relation).
+  const deduped = [];
+  for (const w of out.sort((a, b) => (b.ha ?? 0) - (a.ha ?? 0))) {
+    const f = toXY(w.lat);
+    const dup = deduped.find((d) => d.name === w.name && d.type === w.type && dist(f([d.lon, d.lat]), f([w.lon, w.lat])) < 2000);
+    if (!dup) deduped.push(w);
+  }
+  console.log(`  removed ${out.length - deduped.length} duplicates`);
+  out.length = 0;
+  out.push(...deduped);
+  // Same name, different place: add the county (or size) so people can tell them apart.
+  const counts = out.reduce((m, w) => ((m[w.name] = (m[w.name] ?? 0) + 1), m), {});
+  for (const w of out) if (counts[w.name] > 1) w.label = w.region !== 'Brandenburg' ? `${w.name} (${w.region.replace(/^Landkreis /, '')})` : w.ha ? `${w.name} (${w.ha} ha)` : w.name;
+  for (const w of out) if (w.label) { w.name = w.label; delete w.label; }
   out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
   const regions = [...new Set(out.map((w) => w.region))].sort((a, b) => a.localeCompare(b, 'de'));
   return {
