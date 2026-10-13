@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Commits made by the waters import don't trigger pushes, so redeploy when it finishes.
+  workflow_run:
+    workflows: ['Import waters from OpenStreetMap']
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
