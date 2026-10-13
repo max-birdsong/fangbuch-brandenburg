@@ -12,6 +12,8 @@
 //
 // Data © OpenStreetMap contributors, ODbL. Keep the attribution in the app.
 import { readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=')));
 const MIN_HA = Number(args['min-ha'] ?? 5);
@@ -265,6 +267,6 @@ async function main() {
   console.log(`Wrote ${result.waters.length} waters (${JSON.stringify(counts)}), ${(json.length / 1024 / 1024).toFixed(1)} MB`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   main().catch((e) => { console.error(e); process.exit(1); });
 }
