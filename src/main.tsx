@@ -15,17 +15,13 @@ import { Welcome } from './screens/Welcome';
 import { SignIn } from './screens/SignIn';
 import { ProfileForm } from './screens/ProfileForm';
 import { Home } from './screens/Home';
-import { Setup } from './screens/Setup';
-import { TripScreen } from './screens/TripScreen';
-import { CatchForm } from './screens/CatchForm';
-import { Summary } from './screens/Summary';
 import { Catches } from './screens/Catches';
 import { Profile } from './screens/Profile';
 import { SecureAccount } from './screens/SecureAccount';
 import { Privacy } from './screens/Privacy';
 import { Survey, SurveyThanks } from './screens/Survey';
 import { Admin } from './screens/Admin';
-import { Report } from './screens/Report';
+import { TripForm } from './screens/TripForm';
 
 function Router() {
   const r = useRoute();
@@ -44,13 +40,10 @@ function Router() {
   if (!profile) return r[0] === 'onboarding' ? <ProfileForm mode="onboarding" /> : <Welcome />;
 
   switch (r[0]) {
-    case 'setup':
-      return <Setup />;
+    case 'new':
+      return <TripForm key="new" />;
     case 'trip':
-      if (r[2] === 'catch') return <CatchForm key={r[3] ?? 'new'} tripId={r[1]} catchId={r[3]} />;
-      if (r[2] === 'summary') return <Summary id={r[1]} />;
-      if (r[2] === 'report') return <Report tripId={r[1]} />;
-      return <TripScreen id={r[1]} />;
+      return <TripForm key={r[1]} id={r[1]} />;
     case 'catches':
       return <Catches />;
     case 'profile':
