@@ -234,7 +234,7 @@ export function buildWaters(osm) {
     if (!name) continue;
     const wt = e.tags.water;
     if (wt && !['lake', 'reservoir', 'pond', 'oxbow', 'lagoon', 'basin'].includes(wt)) continue; // river areas etc.
-    if (!wt && lineNames.has(name)) continue; // untagged area of a river/canal that is already a line
+    if (lineNames.has(name)) continue; // a widening of a river/canal (e.g. the Havel at Potsdam): the line covers it
     let rings;
     if (e.type === 'way') rings = [geomOf(e.geometry)];
     else rings = joinChains((e.members ?? []).filter((m) => m.role === 'outer' && m.geometry).map((m) => geomOf(m.geometry)));
