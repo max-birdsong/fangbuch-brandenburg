@@ -11,6 +11,8 @@ export interface Water {
   lat: number;
   lon: number;
   ha?: number;
+  alt?: string; // other name, e.g. the German name of a Polish lake
+  cc?: string; // country if not Germany ('PL')
   geom?: { t: 'poly' | 'line'; c: number[][][] }; // [lon, lat] coordinates
 }
 export interface WatersFile {
@@ -103,13 +105,13 @@ const norm = (s: string) =>
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9 ]+/g, ' ');
 
-/** Simple word search: every typed word must appear in the name or region. */
+/** Simple word search: every typed word must appear in the name, other name or region. */
 export function searchWaters(file: WatersFile, q: string, limit = 8): Water[] {
   const words = norm(q).split(/\s+/).filter(Boolean);
   if (!words.length) return [];
   return file.waters
     .map((w) => {
-      const extra = searchAliases(w.name);
+      const extra = `${w.alt ?? ''} ${searchAliases(w.name)}`;
       const hay = norm(`${w.name} ${extra} ${w.region}`);
       if (!words.every((x) => hay.includes(x))) return null;
       const score = norm(w.name).startsWith(words[0]) || norm(extra).split(' ').some((x) => x && x.startsWith(words[0])) ? 0 : 1;

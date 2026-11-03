@@ -1,7 +1,7 @@
 name: Import waters from OpenStreetMap
 
-# Regenerates public/waters.json (all Brandenburg lakes >= 5 ha, rivers and canals in ~10 km
-# sections) via the Overpass API and commits the result to the branch it ran on.
+# Regenerates public/waters.json (Brandenburg plus the Polish voivodeships Zachodniopomorskie and
+# Lubuskie: lakes >= 5 ha, rivers and canals in ~10 km sections) via the Overpass API and commits the result to the branch it ran on.
 # Run manually from the Actions tab, or push to a branch named waters-*.
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ permissions:
 jobs:
   import:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,14 +24,14 @@ jobs:
       - name: Query Overpass and build waters.json
         run: |
           for i in 1 2 3; do
-            node scripts/import-waters.mjs --save=overpass-raw.json && break
+            node scripts/import-waters.mjs && break
             echo "Overpass attempt $i failed, retrying in 60s"; sleep 60
           done
           test -s public/waters.json
           grep -q 'OpenStreetMap' public/waters.json || (echo 'waters.json was not regenerated' && exit 1)
       - name: Summary
         run: |
-          node -e "const w=require('./public/waters.json'); const c={}; for (const x of w.waters) c[x.type]=(c[x.type]||0)+1; console.log(w.waters.length,'waters',JSON.stringify(c),'regions:',w.regions.length)"
+          node -e "const w=require('./public/waters.json'); const c={}; for (const x of w.waters) { const k=(x.cc||'DE')+' '+x.type; c[k]=(c[k]||0)+1; } console.log(w.waters.length,'waters',JSON.stringify(c),'regions:',w.regions.length)"
           ls -la public/waters.json
       - name: Commit result
         run: |
