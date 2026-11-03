@@ -417,17 +417,31 @@ export function buildWaters(osm, opts = {}) {
   };
 }
 
+/**
+ * Drops Polish entries anglers would never pick: harbour basins in Szczecin ("Basen ..."), numbered
+ * ditches ("820"), military areas, and waters already in the Brandenburg list (same name, < 3 km apart).
+ */
+export function cleanPL(bbWaters, plWaters) {
+  const near = (a, b) => { const f = toXY(a.lat); return dist(f([a.lon, a.lat]), f([b.lon, b.lat])) < 3000; };
+  return plWaters.filter((w) =>
+    !/^\d+$/.test(w.name) &&
+    !/^Basen\b/i.test(w.name) &&
+    !/teren wojskowy/i.test(w.name) &&
+    !bbWaters.some((b) => b.name === w.name && near(b, w)));
+}
+
 /** Brandenburg first, then (optionally) the Polish part; one file with Brandenburg regions listed first. */
 export function buildAll(osmBB, osmPL) {
   const bb = buildWaters(osmBB);
   const pl = osmPL ? buildWaters(osmPL, { pl: true, skipNear: bb.near }) : null;
   const ids = new Set(bb.waters.map((w) => w.id));
-  const plWaters = (pl?.waters ?? []).filter((w) => !ids.has(w.id));
+  const plWaters = cleanPL(bb.waters, (pl?.waters ?? []).filter((w) => !ids.has(w.id)));
+  const plRegions = [...new Set(plWaters.map((w) => w.region))].sort((a, b) => a.localeCompare(b, 'pl'));
   return {
     version: 3,
     source: bb.source,
     generated: bb.generated,
-    regions: [...bb.regions, ...(pl?.regions ?? [])],
+    regions: [...bb.regions, ...plRegions],
     waters: [...bb.waters, ...plWaters]
   };
 }
