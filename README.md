@@ -84,7 +84,7 @@ Scale answers are stored 1 to 5 as answered; items marked `reverse` in the surve
 `public/waters.json` is built from OpenStreetMap by the "Import waters from OpenStreetMap" GitHub Action (or locally with `npm run import:waters`). It covers:
 
 - **Brandenburg:** lakes >= 5 ha with shorelines, rivers and canals in ~10 km sections named after the nearest town, grouped by Landkreis. Border rivers (Oder, Neiße) are clipped to the Brandenburg side.
-- **Poland, Lubuskie:** the same, grouped by powiat ("Powiat gryfiński (PL)"). Polish waters keep their Polish name; a German name from OSM goes into `alt` and is searchable. Ids start with `pl-`, and `cc` is `PL`. The Oder and Neiße are added only where they run entirely through Poland.
+- **Poland, Lubuskie and Zachodniopomorskie:** the same, grouped by powiat ("Powiat gryfiński (PL)"). Polish waters keep their Polish name; a German name from OSM goes into `alt` and is searchable. Ids start with `pl-`, and `cc` is `PL`. The Oder and Neiße are added only where they run entirely through Poland.
 
 ```bash
 npm run import:waters                          # lakes >= 5 ha

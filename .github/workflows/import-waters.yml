@@ -1,7 +1,7 @@
 name: Import waters from OpenStreetMap
 
-# Regenerates public/waters.json (Brandenburg plus the Polish voivodeship
-# Lubuskie: lakes >= 5 ha, rivers and canals in ~10 km sections) via the Overpass API and commits the result to the branch it ran on.
+# Regenerates public/waters.json (Brandenburg plus the Polish voivodeships
+# Lubuskie and Zachodniopomorskie: lakes >= 5 ha, rivers and canals in ~10 km sections) via the Overpass API and commits the result to the branch it ran on.
 # Run manually from the Actions tab, or push to a branch named waters-*.
 on:
   workflow_dispatch:
