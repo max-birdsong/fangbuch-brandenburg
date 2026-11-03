@@ -1,6 +1,8 @@
-# Fangbuch Brandenburg
+# Esox
 
-A catch log app for recreational anglers in Brandenburg, built for the Institut für Binnenfischerei e.V. (IfB) Potsdam-Sacrow. Anglers get a personal logbook (fishing days, catches, own stats); IfB gets effort and catch data for research, including days without a catch.
+A catch log app (Fangbuch / Dziennik połowów) for recreational anglers in Brandenburg and western Poland, built for the Institut für Binnenfischerei e.V. (IfB) Potsdam-Sacrow. Anglers get a personal logbook (fishing days, catches, own stats); IfB gets effort and catch data for research, including days without a catch.
+
+Named after the pike, *Esox lucius*: the same word in German and Polish. The repository and web address still say `fangbuch-brandenburg`; renaming the repository would change the app's address for everyone who installed it.
 
 Status: **proof of concept / pilot**. Licensed to IfB, all rights reserved.
 

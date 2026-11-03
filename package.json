@@ -1,7 +1,7 @@
 {
   "name": "fangbuch-brandenburg",
   "version": "0.1.0",
-  "description": "Fangbuch Brandenburg: catch log app for recreational anglers (Institut für Binnenfischerei e.V. Potsdam-Sacrow)",
+  "description": "Esox: catch log app for recreational anglers (Institut für Binnenfischerei e.V. Potsdam-Sacrow)",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
