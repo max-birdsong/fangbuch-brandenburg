@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { adoptSession, pullAll, syncNow } from './sync';
-import { setKV, wipeLocal } from './db';
+import { wipeLocal } from './db';
+import { signInAnonymouslyOnce } from './anon';
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -25,12 +26,7 @@ export function useSession() {
 
 /** Creates an anonymous account if none exists yet. Fails quietly when offline (retried on sync). */
 export async function ensureAnonymous() {
-  if (!supabase) return;
-  const { data } = await supabase.auth.getSession();
-  if (data.session) return;
-  const { data: res, error } = await supabase.auth.signInAnonymously();
-  if (error) throw error;
-  if (res.user) await setKV('ownerId', res.user.id);
+  await signInAnonymouslyOnce();
 }
 
 /** Where links in Supabase emails send the angler back to: this app. */

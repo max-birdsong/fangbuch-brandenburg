@@ -43,7 +43,9 @@ export function toCSV(rows: Record<string, unknown>[]): string {
   const cols = Object.keys(rows[0]);
   const esc = (v: unknown) => {
     if (v === null || v === undefined) return '';
-    const s = Array.isArray(v) ? v.join('|') : String(v);
+    let s = Array.isArray(v) ? v.join('|') : String(v);
+    // Free text starting with = + - @ would run as a formula in Excel: prefix it with '.
+    if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s) && !/^-?\d+([.,]\d+)?$/.test(s)) s = `'${s}`;
     return /[";\n,]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return [cols.join(';'), ...rows.map((r) => cols.map((c) => esc(r[c])).join(';'))].join('\n');

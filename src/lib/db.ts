@@ -162,7 +162,7 @@ export async function replaceCatches(tripId: string, fish: { species: string; co
     for (const c of old) await db.catches.update(c.id, { deleted: true, dirty: 1, updatedAt: now });
     // updatedAt + index keeps the angler's order when the day is opened again.
     for (const [i, f] of fish.entries()) {
-      await db.catches.put({ id: uuid(), tripId, species: f.species, count: f.count, lengthCm: f.count > 1 ? null : f.lengthCm, kept: f.kept, caughtAt: null, deleted: false, dirty: 1, updatedAt: now + i });
+      await db.catches.put({ id: uuid(), tripId, species: f.species, count: f.count, lengthCm: f.lengthCm, kept: f.kept, caughtAt: null, deleted: false, dirty: 1, updatedAt: now + i });
     }
   });
 }

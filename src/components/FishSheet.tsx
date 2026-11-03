@@ -28,6 +28,7 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
   const [notMeasured, setNotMeasured] = useState(!!fish && fish.count === 1 && fish.cm.trim() === '');
   const [count, setCount] = useState(fish && fish.count > 1 ? String(fish.count) : '');
   const [err, setErr] = useState<string | null>(null);
+  const box = useRef<HTMLDivElement>(null);
   const done = useRef(false); // a double tap on "Hinzufügen" must not add the fish twice
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="modal fish-sheet" role="dialog" aria-modal="true" aria-labelledby="fish-sheet-title" onClick={(e) => e.stopPropagation()}>
+      <div ref={box} className="modal fish-sheet" role="dialog" aria-modal="true" aria-labelledby="fish-sheet-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="fish-sheet-title" className="sheet-title">{bulk ? t('bulkTitle') : fish ? t('fishEdit') : t('fishAdd')}</h2>
         {bulk && <p className="muted small">{t('bulkHint')}</p>}
 
@@ -100,8 +101,8 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
         <div className="stack-sm">
           <p className="sub-label">{bulk ? t('fateMany') : t('fate')}</p>
           <div className="chips" role="radiogroup" aria-label={bulk ? t('fateMany') : t('fate')}>
-            <button type="button" role="radio" aria-checked={kept === false} className={`chip ${kept === false ? 'on' : ''}`} onClick={() => { setKept(false); setErr(null); }}>{t('released')}</button>
-            <button type="button" role="radio" aria-checked={kept === true} className={`chip ${kept === true ? 'on' : ''}`} onClick={() => { setKept(true); setErr(null); }}>{t('kept')}</button>
+            <button type="button" role="radio" aria-checked={kept === false} className={`chip ${kept === false ? 'on' : ''}`} onClick={() => { setKept(false); setErr(null); }}>{bulk ? t('releasedMany') : t('released')}</button>
+            <button type="button" role="radio" aria-checked={kept === true} className={`chip ${kept === true ? 'on' : ''}`} onClick={() => { setKept(true); setErr(null); }}>{bulk ? t('keptMany') : t('kept')}</button>
           </div>
         </div>
 
@@ -112,7 +113,7 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
           <button type="button" className="btn secondary" onClick={onClose}>{t('cancel')}</button>
           {onDelete && <button type="button" className="btn danger-outline" onClick={onDelete}>{t('delete')}</button>}
         </div>
-        <button type="button" className="link-btn" onClick={() => { setBulk(!bulk); setErr(null); }}>
+        <button type="button" className="link-btn" onClick={() => { setBulk(!bulk); setErr(null); box.current?.scrollTo({ top: 0 }); }}>
           {bulk ? t('bulkBack') : t('bulkLink')}
         </button>
       </div>
