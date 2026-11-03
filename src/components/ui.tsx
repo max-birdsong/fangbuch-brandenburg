@@ -41,40 +41,6 @@ export function Chips<T extends string>({
   );
 }
 
-export function Stepper({ value, onChange, min = 0, max = 999, steps = [1], unit, label, allowInput = true }: {
-  value: number; onChange: (v: number) => void; min?: number; max?: number; steps?: number[]; unit?: string; label: string; allowInput?: boolean;
-}) {
-  const clamp = (v: number) => Math.max(min, Math.min(max, v));
-  const big = steps.length > 1 ? steps[steps.length - 1] : null;
-  return (
-    <div className="stepper">
-      {big && <button type="button" className="step" aria-label={`${label} −${big}`} onClick={() => onChange(clamp(value - big))}>−{big}</button>}
-      <button type="button" className="step" aria-label={`${label} −1`} onClick={() => onChange(clamp(value - 1))}>−</button>
-      <label className="step-value">
-        <span className="sr-only">{label}</span>
-        {allowInput ? (
-          <input
-            type="number"
-            inputMode="numeric"
-            value={value}
-            min={min}
-            max={max}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              if (!Number.isNaN(n)) onChange(clamp(n));
-            }}
-          />
-        ) : (
-          <span>{value}</span>
-        )}
-        {unit && <span className="unit">{unit}</span>}
-      </label>
-      <button type="button" className="step" aria-label={`${label} +1`} onClick={() => onChange(clamp(value + 1))}>+</button>
-      {big && <button type="button" className="step" aria-label={`${label} +${big}`} onClick={() => onChange(clamp(value + big))}>+{big}</button>}
-    </div>
-  );
-}
-
 export function Field({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
   return (
     <section className="field">
