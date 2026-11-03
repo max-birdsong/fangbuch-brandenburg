@@ -37,15 +37,6 @@ export const SCALES = {
       { de: 'sehr wichtig', en: 'very important' },
       { de: 'extrem wichtig', en: 'extremely important' }
     ]
-  },
-  skill5: {
-    points: [
-      { de: 'viel schlechter', en: 'much less skilled' },
-      { de: 'etwas schlechter', en: 'somewhat less skilled' },
-      { de: 'etwa gleich', en: 'about the same' },
-      { de: 'etwas besser', en: 'somewhat more skilled' },
-      { de: 'viel besser', en: 'much more skilled' }
-    ]
   }
 } satisfies Record<string, Scale>;
 
@@ -84,9 +75,7 @@ export const SURVEY: { id: string; version: number; minutes: number; sections: S
           ]
         },
         // Avidity (behavioural dimension of specialization).
-        { id: 'days_12m', type: 'number', text: { de: 'An wie vielen Tagen hast du in den letzten 12 Monaten geangelt (ungefähr)?', en: 'About how many days did you go fishing in the last 12 months?' }, min: 0, max: 366, unit: { de: 'Tage', en: 'days' } },
-        // Self-rated skill (cognitive dimension of specialization), cf. Beardmore et al. 2013.
-        { id: 'skill_self', type: 'likert', scale: 'skill5', text: { de: 'Wie schätzt du deine Fähigkeiten beim Angeln im Vergleich zu anderen Anglerinnen und Anglern ein?', en: 'How would you rate your fishing skills compared to other anglers?' } }
+        { id: 'days_12m', type: 'number', text: { de: 'An wie vielen Tagen hast du in den letzten 12 Monaten geangelt (ungefähr)?', en: 'About how many days did you go fishing in the last 12 months?' }, min: 0, max: 366, unit: { de: 'Tage', en: 'days' } }
       ]
     },
     {
