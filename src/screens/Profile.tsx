@@ -53,8 +53,8 @@ export function Profile() {
       satisfaction: tr.satisfaction,
       n_fish: catches.filter((c) => c.tripId === tr.id).reduce((s, c) => s + c.count, 0)
     }));
-    downloadText('esox-faenge.csv', toCSV(rows));
-    setTimeout(() => downloadText('esox-angeltage.csv', toCSV(tripRows)), 400);
+    downloadText('fangbuch-faenge.csv', toCSV(rows));
+    setTimeout(() => downloadText('fangbuch-angeltage.csv', toCSV(tripRows)), 400);
   };
 
   const doSignOut = async () => {

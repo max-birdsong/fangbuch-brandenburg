@@ -2,8 +2,8 @@ import type { Lang } from './data/catalog';
 
 const de = {
   institute: 'Institut für Binnenfischerei',
-  welcomeTitle: 'Esox',
-  welcomeTitle2: 'Fangbuch',
+  welcomeTitle: 'Fangbuch',
+  welcomeTitle2: '',
   welcomeIntro: 'Dein persönliches Fangbuch für Flüsse und Seen in Brandenburg und Westpolen. Jeder Eintrag hilft der Fischereiforschung, auch Tage ohne Fang.',
   getStarted: 'Loslegen',
   haveAccount: 'Ich habe schon ein Konto',
@@ -126,8 +126,8 @@ const de = {
   syncNow: 'Jetzt synchronisieren',
   deleteAccount: 'Konto und alle Daten löschen',
   deleteAccountQ: 'Wirklich dein Konto und alle Einträge endgültig löschen?',
-  about: 'Über Esox',
-  aboutText: 'Esox ist ein Fangbuch des Instituts für Binnenfischerei e.V. Potsdam-Sacrow für Anglerinnen und Angler in Brandenburg und Westpolen. Deine Einträge helfen, die Fischbestände und die Angelfischerei besser zu verstehen. Der Name kommt vom Hecht, Esox lucius.',
+  about: 'Über das Fangbuch',
+  aboutText: 'Das Fangbuch ist ein Projekt des Instituts für Binnenfischerei e.V. Potsdam-Sacrow für Anglerinnen und Angler in Brandenburg und Westpolen. Deine Einträge helfen, die Fischbestände und die Angelfischerei besser zu verstehen.',
   osm: 'Gewässerdaten © OpenStreetMap-Mitwirkende (ODbL)',
   version: 'Version',
 
@@ -193,8 +193,8 @@ export type StringKey = keyof typeof de;
 
 const en: Record<StringKey, string> = {
   institute: 'Institute of Inland Fisheries',
-  welcomeTitle: 'Esox',
-  welcomeTitle2: 'Catch log',
+  welcomeTitle: 'Catch log',
+  welcomeTitle2: '',
   welcomeIntro: 'Your personal fishing log for rivers and lakes in Brandenburg and western Poland. Every entry helps fisheries research, including days without a catch.',
   getStarted: 'Get started',
   haveAccount: 'I already have an account',
@@ -317,8 +317,8 @@ const en: Record<StringKey, string> = {
   syncNow: 'Sync now',
   deleteAccount: 'Delete account and all data',
   deleteAccountQ: 'Really delete your account and all entries permanently?',
-  about: 'About Esox',
-  aboutText: 'Esox is a catch log by the Institute of Inland Fisheries (Institut für Binnenfischerei e.V.) Potsdam-Sacrow for anglers in Brandenburg and western Poland. Your entries help us understand fish stocks and recreational fishing. The name comes from the pike, Esox lucius.',
+  about: 'About the catch log',
+  aboutText: 'The catch log is a project of the Institute of Inland Fisheries (Institut für Binnenfischerei e.V.) Potsdam-Sacrow for anglers in Brandenburg and western Poland. Your entries help us understand fish stocks and recreational fishing.',
   osm: 'Water data © OpenStreetMap contributors (ODbL)',
   version: 'Version',
 
@@ -384,8 +384,8 @@ const en: Record<StringKey, string> = {
 // Informal "Ty" as in the German "du". Counts avoid Polish plural forms ("ryby: 5", "5 szt.").
 const pl: Record<StringKey, string> = {
   institute: 'Institut für Binnenfischerei',
-  welcomeTitle: 'Esox',
-  welcomeTitle2: 'Dziennik połowów',
+  welcomeTitle: 'Dziennik połowów',
+  welcomeTitle2: '',
   welcomeIntro: 'Twój osobisty dziennik połowów dla rzek i jezior Brandenburgii i zachodniej Polski. Każdy wpis pomaga badaniom rybackim, także dni bez ryby.',
   getStarted: 'Zaczynamy',
   haveAccount: 'Mam już konto',
@@ -507,8 +507,8 @@ const pl: Record<StringKey, string> = {
   syncNow: 'Synchronizuj teraz',
   deleteAccount: 'Usuń konto i wszystkie dane',
   deleteAccountQ: 'Na pewno trwale usunąć konto i wszystkie wpisy?',
-  about: 'O aplikacji Esox',
-  aboutText: 'Esox to dziennik połowów Institut für Binnenfischerei e.V. w Poczdamie-Sacrow (Niemcy) dla wędkarzy z Brandenburgii i zachodniej Polski. Twoje wpisy pomagają lepiej zrozumieć stan rybostanu i wędkarstwa. Nazwa pochodzi od szczupaka, Esox lucius.',
+  about: 'O dzienniku',
+  aboutText: 'Dziennik połowów to projekt Institut für Binnenfischerei e.V. w Poczdamie-Sacrow (Niemcy) dla wędkarzy z Brandenburgii i zachodniej Polski. Twoje wpisy pomagają lepiej zrozumieć stan rybostanu i wędkarstwa.',
   osm: 'Dane o łowiskach © współtwórcy OpenStreetMap (ODbL)',
   version: 'Wersja',
 
