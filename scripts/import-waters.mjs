@@ -50,14 +50,20 @@ area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
 out geom;
 `;
 
-// Polish part, queried in small pieces (per voivodeship and per kind of feature): big queries time out.
-const PL_AREA = (voiv) => `area["name"="województwo ${voiv}"][admin_level=4]->.pl;`;
-const PL_PARTS = {
-  lakes: '(way["natural"="water"]["name"](area.pl); relation["natural"="water"]["name"](area.pl););',
-  rivers: 'way["waterway"~"^(river|canal)$"]["name"](area.pl);',
-  places: '(node["place"~"^(city|town|village)$"]["name"](area.pl); relation["boundary"="administrative"]["admin_level"="6"](area.pl););'
-};
-const QUERY_PL = (voiv, part) => `[out:json][timeout:600][maxsize:1073741824];\n${PL_AREA(voiv)}\n${PL_PARTS[part]}\nout geom;`;
+// Polish part: one query per voivodeship (old letter or new number ISO code). Public Overpass servers
+// rate-limit by IP after a big query, so main() pauses between queries.
+const QUERY_PL = (code) => `
+[out:json][timeout:600][maxsize:1073741824];
+area["ISO3166-2"~"^PL-(${code})$"][admin_level=4]->.pl;
+(
+  way["natural"="water"]["name"](area.pl);
+  relation["natural"="water"]["name"](area.pl);
+  way["waterway"~"^(river|canal)$"]["name"](area.pl);
+  node["place"~"^(city|town|village)$"]["name"](area.pl);
+  relation["boundary"="administrative"]["admin_level"="6"](area.pl);
+);
+out geom;
+`;
 
 // ------------------------------------------------------------------ geometry helpers
 const toXY = (lat0) => {
@@ -428,10 +434,10 @@ export function buildAll(osmBB, osmPL) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Runs a query, trying each public Overpass server up to twice. */
+/** Runs a query; on failure waits for the rate limit to clear and tries again (other servers on the way). */
 async function overpass(query, label) {
   let last;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     for (const ep of ENDPOINTS) {
       console.log(`Querying ${ep} for ${label} ...`);
       try {
@@ -443,12 +449,13 @@ async function overpass(query, label) {
         if (!res.ok) throw new Error(`Overpass error ${res.status}: ${(await res.text()).slice(0, 200)}`);
         const osm = await res.json();
         if (osm.remark && /runtime error|timed out|out of memory/i.test(osm.remark)) throw new Error(osm.remark);
+        if (!osm.elements?.length) throw new Error('no elements (area not found?)');
         console.log(`  ${osm.elements?.length ?? 0} elements`);
         return osm;
       } catch (e) {
         last = e;
         console.log(`  failed: ${String(e.message).split('\n')[0]}`);
-        await sleep(20_000);
+        await sleep(ep === ENDPOINTS[0] ? 120_000 : 15_000);
       }
     }
   }
@@ -464,11 +471,9 @@ async function main() {
     if (args['from-pl']) osmPL = JSON.parse(await readFile(args['from-pl'], 'utf8'));
     else if (!args.from) {
       const parts = [];
-      for (const voiv of ['zachodniopomorskie', 'lubuskie']) {
-        for (const part of Object.keys(PL_PARTS)) {
-          await sleep(10_000); // be polite to the public Overpass servers
-          parts.push(await overpass(QUERY_PL(voiv, part), `${part} in ${voiv} (Poland)`));
-        }
+      for (const [code, label] of [['ZP|32', 'Zachodniopomorskie'], ['LB|08', 'Lubuskie']]) {
+        await sleep(90_000); // let the rate limit from the previous query clear
+        parts.push(await overpass(QUERY_PL(code), `${label} (Poland)`));
       }
       osmPL = mergeOsm(parts);
     }
