@@ -10,6 +10,7 @@ import { ConfirmProvider, LangProvider, useRoute } from './app';
 import { useSession } from './lib/auth';
 import { useProfile } from './lib/hooks';
 import { adoptSession, startAutoSync } from './lib/sync';
+import { loadWaters } from './lib/waters';
 import { supabase } from './lib/supabase';
 import { Welcome } from './screens/Welcome';
 import { SignIn } from './screens/SignIn';
@@ -69,6 +70,9 @@ if (/(access_token|error_description|message)=/.test(location.hash)) {
 
 registerSW({ immediate: true });
 startAutoSync();
+// Fetch the water list right away (not only when a day is opened), so it is on the phone even if the
+// signal drops before the first fishing day is entered.
+setTimeout(() => void loadWaters().catch(() => {}), 1500);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
