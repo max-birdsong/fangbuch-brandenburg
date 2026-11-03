@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { go, useLang } from '../app';
-import { Chips, Field, Stepper, TopBar } from '../components/ui';
+import { Chips, Field, TopBar } from '../components/ui';
 import { CLUB_STATUS, COUNTRIES, LICENSES } from '../data/catalog';
 import { CONSENT_VERSION, getProfile, saveProfile, type Profile } from '../lib/db';
 import { ensureAnonymous } from '../lib/auth';
@@ -8,7 +8,7 @@ import { scheduleSync } from '../lib/sync';
 
 type Draft = Omit<Profile, 'dirty' | 'updatedAt' | 'consentVersion' | 'consentAt'>;
 const EMPTY: Draft = {
-  yearsFishing: 10,
+  yearsFishing: null,
   homeCountry: 'DE',
   homePostcode: '',
   clubStatus: null,
@@ -89,7 +89,23 @@ export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
       )}
       <div className="content stack-lg">
         <Field label={t('qYears')}>
-          <Stepper label={t('qYears')} value={d.yearsFishing ?? 0} min={0} max={90} unit={t('years')} onChange={(v) => set('yearsFishing', v)} />
+          <span className="row gap">
+            <input
+              className="num-input"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={90}
+              aria-label={t('qYears')}
+              value={d.yearsFishing ?? ''}
+              onChange={(e) => {
+                if (e.target.value === '') return set('yearsFishing', null);
+                const n = Math.round(Number(e.target.value));
+                if (!Number.isNaN(n)) set('yearsFishing', Math.max(0, Math.min(90, n)));
+              }}
+            />
+            <span className="muted">{t('years')}</span>
+          </span>
         </Field>
 
         <Field label={t('qHome')} hint={t('homeHint')}>

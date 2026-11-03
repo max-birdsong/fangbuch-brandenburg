@@ -128,27 +128,12 @@ button, input, select { font: inherit; color: inherit; }
 .sat { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .sat-btn { padding: 0; font-size: 18px; font-weight: 800; border-radius: 12px; min-height: 52px; }
 
-/* Stepper */
-.stepper { display: flex; align-items: center; gap: 8px; }
-.step {
-  min-width: 48px; height: 52px; border-radius: 12px; border: 1.5px solid var(--line-strong);
-  background: var(--card); font-size: 18px; font-weight: 700; cursor: pointer;
-}
-.step-value { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 4px; }
-.step-value input {
-  width: 100%; max-width: 110px; text-align: center; font-size: 30px; font-weight: 800; border: 0;
-  background: transparent; padding: 0; -moz-appearance: textfield;
-}
-.step-value input::-webkit-outer-spin-button, .step-value input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.unit { font-size: 17px; font-weight: 600; color: var(--muted); }
-
 /* Inputs */
 .input-label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; color: var(--muted); }
 input[type='text'], input[type='email'], input[type='search'], input[type='date'], input[type='time'], input:not([type]), input[inputmode], select {
   min-height: 48px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--line-strong);
   background: var(--card); font-size: 16px; color: var(--ink); width: 100%;
 }
-.step-value input[inputmode] { border: 0; min-height: 0; padding: 0; background: transparent; }
 input.invalid { border-color: var(--danger); }
 .search { display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--card); padding-left: 12px; color: var(--muted); }
 .search input { border: 0; padding-left: 0; }
@@ -299,7 +284,6 @@ input.invalid { border-color: var(--danger); }
 .counter { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .counter-label { font-size: 15px; font-weight: 600; color: var(--muted); }
 .counter-value { min-width: 36px; text-align: center; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.step.small { min-width: 44px; height: 44px; font-size: 20px; }
 a.tile { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .stale-card { border: 2px solid var(--accent); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(150px + var(--safe-b)); z-index: 20; width: calc(100% - 32px); max-width: 520px;
