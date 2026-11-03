@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLang } from '../app';
 import { Chips } from './ui';
 import { SPECIES, label } from '../data/catalog';
@@ -28,6 +28,7 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
   const [notMeasured, setNotMeasured] = useState(!!fish && fish.count === 1 && fish.cm.trim() === '');
   const [count, setCount] = useState(fish && fish.count > 1 ? String(fish.count) : '');
   const [err, setErr] = useState<string | null>(null);
+  const done = useRef(false); // a double tap on "Hinzufügen" must not add the fish twice
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -40,13 +41,15 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
   const others = SPECIES.filter((s) => !chipCodes.includes(s.code));
 
   const submit = () => {
+    if (done.current) return;
     if (!species) return setErr(t('pickSpecies'));
-    const n = bulk ? Number(count) : 1;
-    if (bulk && !(Number.isInteger(n) && n >= 2 && n <= 9999)) return setErr(t('countInvalid'));
+    const n = bulk ? (/^\s*\d+\s*$/.test(count) ? Number(count) : NaN) : 1;
+    if (bulk && !(n >= 2 && n <= 9999)) return setErr(t('countInvalid'));
     const len = bulk || notMeasured ? null : parseCm(cm);
     if (!bulk && !notMeasured && len === null) return setErr(t('lengthRequired'));
     if (len !== null && !(len > 0 && len < 400)) return setErr(t('lengthInvalid'));
     if (kept === null) return setErr(t('pickFate'));
+    done.current = true;
     onSave({ species, count: n, cm: bulk || notMeasured ? '' : cm.trim(), kept });
   };
 
@@ -73,7 +76,7 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
         {bulk ? (
           <label className="input-label">
             {t('count')}
-            <input className="fish-len" inputMode="numeric" value={count} onChange={(e) => { setCount(e.target.value.replace(/\D/g, '')); setErr(null); }} />
+            <input className="fish-len" inputMode="numeric" value={count} onChange={(e) => { setCount(e.target.value); setErr(null); }} />
           </label>
         ) : (
           <div className="stack-sm">

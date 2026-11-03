@@ -43,6 +43,8 @@ export function Profile() {
           kept: c.kept ? 1 : 0
         };
       });
+    const fishPerTrip = new Map<string, number>();
+    for (const c of catches) fishPerTrip.set(c.tripId, (fishPerTrip.get(c.tripId) ?? 0) + c.count);
     const tripRows = trips.map((tr) => ({
       date: tr.startedAt.slice(0, 10),
       start: tr.startedAt,
@@ -51,7 +53,7 @@ export function Profile() {
       method: label(METHODS, tr.method, lang),
       platform: label(PLATFORMS, tr.platform, lang),
       satisfaction: tr.satisfaction,
-      n_fish: catches.filter((c) => c.tripId === tr.id).reduce((s, c) => s + c.count, 0)
+      n_fish: fishPerTrip.get(tr.id) ?? 0
     }));
     downloadText('fangbuch-faenge.csv', toCSV(rows));
     setTimeout(() => downloadText('fangbuch-angeltage.csv', toCSV(tripRows)), 400);

@@ -1,15 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { go, useConfirm, useLang } from '../app';
 import { Chips, Field, TopBar } from '../components/ui';
 import { Satisfaction } from '../components/Satisfaction';
 import { FishSheet, fishLine, parseCm, type FishDraft } from '../components/FishSheet';
 import { WaterPicker, type WaterValue } from '../components/WaterPicker';
 import { METHODS, PLATFORMS, QUICK_SPECIES, SPECIES, TARGETS, label } from '../data/catalog';
-import { db, deleteTrip, rememberWater, replaceCatches, saveTrip, type Trip } from '../lib/db';
+import { db, deleteTrip, getKV, rememberWater, replaceCatches, saveTrip, setKV, type Trip } from '../lib/db';
 import { scheduleSync } from '../lib/sync';
 import { fromInputs, toDateInput, toTimeInput, uuid } from '../lib/util';
 
 const roundHour = (d: Date) => toTimeInput(d).slice(0, 3) + '00';
+
+// A new day being entered is kept as a draft on the phone, so it survives the browser being closed
+// or reloaded (e.g. after switching to the camera). Cleared on save; older than 2 days is ignored.
+const DRAFT_KEY = 'draft:newTrip';
+type Draft = {
+  savedAt: number; tripId: string; water: WaterValue | null; date: string; from: string; to: string;
+  method: string | null; platform: string | null; targets: string[]; fish: FishDraft[]; satisfaction: number | null;
+};
 
 /**
  * The one form for a fishing day: where, when, how, what was caught, how it was.
@@ -19,7 +27,11 @@ export function TripForm({ id }: { id?: string }) {
   const { t, lang } = useLang();
   const confirm = useConfirm();
   const now = new Date();
-  const [loaded, setLoaded] = useState(!id);
+  const [loaded, setLoaded] = useState(false);
+  const [restored, setRestored] = useState(false);
+  // One id per form, so a double tap on save writes the same day twice instead of two days.
+  const [newId, setNewId] = useState(uuid);
+  const saving = useRef(false);
   const [existing, setExisting] = useState<Trip | null>(null);
   const [water, setWater] = useState<WaterValue | null>(null);
   const [date, setDate] = useState(toDateInput(now));
@@ -33,6 +45,35 @@ export function TripForm({ id }: { id?: string }) {
   const [satisfaction, setSatisfaction] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // New day: restore an unsaved draft, if any.
+  useEffect(() => {
+    if (id) return;
+    void (async () => {
+      const d = await getKV<Draft | null>(DRAFT_KEY, null);
+      if (d && Date.now() - d.savedAt < 2 * 86_400_000 && (d.water || d.fish.length)) {
+        setNewId(d.tripId); setWater(d.water); setDate(d.date); setFrom(d.from); setTo(d.to);
+        setMethod(d.method); setPlatform(d.platform); setTargets(d.targets); setFish(d.fish); setSatisfaction(d.satisfaction);
+        setRestored(true);
+      }
+      setLoaded(true);
+    })();
+  }, [id]);
+
+  // Keep the draft up to date while a new day is being entered.
+  useEffect(() => {
+    if (id || !loaded || saving.current) return;
+    if (!water && !fish.length) return;
+    void setKV(DRAFT_KEY, { savedAt: Date.now(), tripId: newId, water, date, from, to, method, platform, targets, fish, satisfaction } satisfies Draft);
+  }, [id, loaded, newId, water, date, from, to, method, platform, targets, fish, satisfaction]);
+
+  const discardDraft = async () => {
+    await setKV(DRAFT_KEY, null);
+    const n = new Date();
+    setNewId(uuid()); setWater(null); setDate(toDateInput(n)); setFrom(roundHour(new Date(n.getTime() - 3 * 3_600_000))); setTo(roundHour(n));
+    setMethod(null); setPlatform(null); setTargets([]); setFish([]); setSatisfaction(null); setRestored(false);
+    setLoaded(false); setTimeout(() => setLoaded(true), 0); // remount the water picker so GPS can suggest again
+  };
 
   // Edit: load the day and its catches.
   useEffect(() => {
@@ -85,9 +126,11 @@ export function TripForm({ id }: { id?: string }) {
     let endedAt = fromInputs(date, to);
     if (endedAt <= startedAt) endedAt = new Date(new Date(endedAt).getTime() + 86_400_000).toISOString(); // past midnight
     if (new Date(startedAt).getTime() > Date.now() + 60_000) return setErr(t('futureTime'));
+    if (saving.current) return; // second tap while the first save is still running
+    saving.current = true;
     setErr(null);
     setBusy(true);
-    const tripId = id ?? uuid();
+    const tripId = id ?? newId;
     await saveTrip({
       id: tripId,
       waterId: water.waterId,
@@ -106,6 +149,7 @@ export function TripForm({ id }: { id?: string }) {
     });
     await replaceCatches(tripId, fish.map((f) => ({ species: f.species, count: f.count, kept: f.kept, lengthCm: parseCm(f.cm) })));
     if (water.waterId) await rememberWater(water.waterId);
+    if (!id) await setKV(DRAFT_KEY, null);
     scheduleSync();
     go('', true);
   };
@@ -121,6 +165,12 @@ export function TripForm({ id }: { id?: string }) {
     <main className="screen">
       <TopBar title={id ? t('formTitleEdit') : t('formTitleNew')} backTo="" />
       <div className="content stack-lg">
+        {restored && (
+          <div className="draft-note row between gap">
+            <span>{t('draftRestored')}</span>
+            <button type="button" className="link-btn" onClick={() => void discardDraft()}>{t('draftDiscard')}</button>
+          </div>
+        )}
         <Field label={t('water')}>
           <WaterPicker value={water} autoLocate={!id} onChange={(v) => { setWater(v); setErr(null); }} />
         </Field>
