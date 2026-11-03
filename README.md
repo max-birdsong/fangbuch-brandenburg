@@ -81,13 +81,15 @@ Scale answers are stored 1 to 5 as answered; items marked `reverse` in the surve
 
 ## Water bodies
 
-`public/waters.json` currently holds a **hand-made starter list** of ~80 well-known Brandenburg waters with approximate points (good enough for testing GPS suggestions).
+`public/waters.json` is built from OpenStreetMap by the "Import waters from OpenStreetMap" GitHub Action (or locally with `npm run import:waters`). It covers:
 
-Replace it with the full OpenStreetMap-based list (lakes with shorelines, rivers split into ~10 km sections named after the nearest town, grouped by Landkreis):
+- **Brandenburg:** lakes >= 5 ha with shorelines, rivers and canals in ~10 km sections named after the nearest town, grouped by Landkreis. Border rivers (Oder, Neiße) are clipped to the Brandenburg side.
+- **Poland, Lubuskie and Zachodniopomorskie:** the same, grouped by powiat ("Powiat gryfiński (PL)"). Polish waters keep their Polish name; a German name from OSM goes into `alt` and is searchable. Ids start with `pl-`, and `cc` is `PL`. The Oder and Neiße are added only where they run entirely through Poland.
 
 ```bash
 npm run import:waters                          # lakes >= 5 ha
 npm run import:waters -- --min-ha=2 --section-km=8
+npm run import:waters -- --no-pl               # Brandenburg only
 ```
 
 This calls the public Overpass API and takes a few minutes. Review the result before release. IfB's own spatial units (e.g. Oder sections by river km or lease areas) can replace the automatic sectioning later; the app only needs `id`, `name`, `type`, `region`, `lat`, `lon` and optionally `geom` per water.
