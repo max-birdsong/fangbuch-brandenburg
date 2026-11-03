@@ -32,9 +32,11 @@ type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (k: StringKey, v?: Recor
 const LangCtx = createContext<Ctx>(null as unknown as Ctx);
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>('de');
+  const [lang, setLangState] = useState<Lang>(() => (/^pl\b/i.test(navigator.language || '') ? 'pl' : 'de'));
   useEffect(() => {
-    void getKV<Lang>('lang', 'de').then(setLangState);
+    // First start: Polish phones get Polish, everyone else German (switchable on the start screen).
+    const guess: Lang = /^pl\b/i.test(navigator.language || '') ? 'pl' : 'de';
+    void getKV<Lang>('lang', guess).then(setLangState);
   }, []);
   useEffect(() => {
     document.documentElement.lang = lang;

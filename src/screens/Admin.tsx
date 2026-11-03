@@ -9,7 +9,9 @@ import { downloadText, toCSV } from '../lib/util';
 
 /** Research dashboard. Admins see all anglers; everyone else only this device's data. */
 export function Admin() {
-  const { lang } = useLang();
+  // Research dashboard: German or English only (Polish app users see it in English).
+  const { lang: appLang } = useLang();
+  const lang: 'de' | 'en' = appLang === 'de' ? 'de' : 'en';
   const L = (de: string, en: string) => (lang === 'de' ? de : en);
   const [data, setData] = useState<AdminData | null>(null);
   const [err, setErr] = useState<string | null>(null);

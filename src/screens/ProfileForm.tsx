@@ -26,6 +26,13 @@ const postcodeOk = (country: Draft['homeCountry'], pc: string) => {
   return v.length >= 2 && v.length <= 10;
 };
 
+// Licences of the angler's home country first (Polish anglers see the PZW permits on top).
+const licenseOrder = (country: Draft['homeCountry']) => {
+  const rank = (cc: string | null) => (cc === null ? 1 : cc === (country === 'PL' ? 'PL' : 'DE') ? 0 : 2);
+  const last = (code: string) => (code === 'other' ? 1 : 0);
+  return [...LICENSES].sort((a, b) => last(a.code) - last(b.code) || rank(a.cc) - rank(b.cc));
+};
+
 /** Onboarding (mode = 'onboarding') and later editing (mode = 'edit') share this form. */
 export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
   const { t, lang } = useLang();
@@ -155,12 +162,12 @@ export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
 
         <Field label={<>{t('qLicenses')} <span className="muted">({t('multiple')})</span></>}>
           <div className="stack-sm" role="group" aria-label={t('qLicenses')}>
-            {LICENSES.map((l) => {
+            {licenseOrder(d.homeCountry).map((l) => {
               const on = d.licenses.includes(l.code);
               return (
                 <button key={l.code} type="button" role="checkbox" aria-checked={on} className={`option ${on ? 'on' : ''}`} onClick={() => toggleLicense(l.code)}>
                   <span className="option-title">{l[lang]}</span>
-                  {(lang === 'de' ? l.sub_de : l.sub_en) && <span className="option-sub">{lang === 'de' ? l.sub_de : l.sub_en}</span>}
+                  {l.sub && <span className="option-sub">{l.sub[lang]}</span>}
                 </button>
               );
             })}

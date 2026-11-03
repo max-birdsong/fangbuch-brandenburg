@@ -120,6 +120,6 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
 /** One line in the fish list, e.g. "Zander · 52 cm · zurückgesetzt" or "Plötze · 40 Stück · zurückgesetzt". */
 export function fishLine(f: FishDraft, name: string, fateText: string, piecesText: string, lang: string) {
   const n = parseCm(f.cm);
-  const len = f.count > 1 ? piecesText : n === null ? null : `${lang === 'de' ? String(n).replace('.', ',') : n} cm`;
+  const len = f.count > 1 ? piecesText : n === null ? null : `${lang === 'en' ? n : String(n).replace('.', ',')} cm`;
   return [name, len, fateText.toLowerCase()].filter(Boolean).join(' · ');
 }

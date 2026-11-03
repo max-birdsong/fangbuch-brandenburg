@@ -13,7 +13,7 @@ Status: **proof of concept / pilot**. Licensed to IfB, all rights reserved.
 - Catch: each fish is entered on its own (species, length in cm or "not measured", released or kept). Many small fish of one species (bait fish, small whitefish) can be entered at once as a number, without length.
 - Optional baseline survey (age, avidity, centrality/attraction, motivations, catch orientation, Oder questions), offered after the first fishing day. Answers save as you go and can be resumed.
 - Water picker: nearest water via GPS (computed on the phone, coordinates are never stored), recently visited, search, by region, or free text.
-- German and English. Polish can be added in `src/i18n.ts`.
+- German, English and Polish (Polish texts are a draft, to be checked by a native speaker). Polish phones start in Polish. Polish anglers see the PZW permit types first, and the border rivers as Odra / Nysa Łużycka.
 - Anglers can download their own data (CSV) and delete their account with all data.
 
 ## Run it locally
