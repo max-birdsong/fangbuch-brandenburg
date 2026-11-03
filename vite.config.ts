@@ -17,9 +17,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon.svg'],
       manifest: {
-        name: 'Fangbuch Brandenburg',
-        short_name: 'Fangbuch',
-        description: 'Dein persönliches Fangbuch für die Gewässer Brandenburgs',
+        name: 'Esox · Fangbuch',
+        short_name: 'Esox',
+        description: 'Dein persönliches Fangbuch für Brandenburg und Westpolen',
         lang: 'de',
         theme_color: '#0E4C5C',
         background_color: '#0E4C5C',

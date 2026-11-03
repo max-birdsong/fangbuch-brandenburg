@@ -63,14 +63,14 @@ export function Admin() {
       if (c.kept) r.kept += c.count;
       fish.set(c.tripId, r);
     }
-    downloadText('fangbuch-angeltage.csv', toCSV(data.trips.map((t) => ({
+    downloadText('esox-angeltage.csv', toCSV(data.trips.map((t) => ({
       trip_id: t.id, user_id: t.userId, water_id: t.waterId, water: t.waterName, started_at: t.startedAt, ended_at: t.endedAt,
       hours: hoursOf(t).toFixed(2), method: t.method, platform: t.platform, logged_live: t.loggedLive ? 1 : 0,
       satisfaction: t.satisfaction, n_fish: fish.get(t.id)?.n ?? 0, n_kept: fish.get(t.id)?.kept ?? 0
     }))));
   };
-  const exportCatches = () => downloadText('fangbuch-faenge.csv', toCSV(data.catches.map((c) => ({ trip_id: c.tripId, species: c.species, count: c.count, length_cm: c.lengthCm, kept: c.kept ? 1 : 0 }))));
-  const exportSurvey = () => downloadText('fangbuch-umfrage.csv', toCSV(surveyWide(data)));
+  const exportCatches = () => downloadText('esox-faenge.csv', toCSV(data.catches.map((c) => ({ trip_id: c.tripId, species: c.species, count: c.count, length_cm: c.lengthCm, kept: c.kept ? 1 : 0 }))));
+  const exportSurvey = () => downloadText('esox-umfrage.csv', toCSV(surveyWide(data)));
 
   return (
     <main className="screen">
