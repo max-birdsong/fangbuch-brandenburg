@@ -2,6 +2,7 @@ import { useLang } from '../app';
 import { METHODS, SPECIES, label } from '../data/catalog';
 import type { Catch, Trip } from '../lib/db';
 import { fmtDateShort, fmtTime } from '../lib/util';
+import { localWaterName } from '../lib/waterNames';
 
 export function TripCard({ trip, catches }: { trip: Trip; catches: Catch[] }) {
   const { t, lang } = useLang();
@@ -11,7 +12,7 @@ export function TripCard({ trip, catches }: { trip: Trip; catches: Catch[] }) {
   return (
     <a className="card trip-card" href={`#/trip/${trip.id}`}>
       <div className="row between gap">
-        <span className="card-title">{trip.waterOther || trip.waterName}</span>
+        <span className="card-title">{trip.waterOther || localWaterName(trip.waterName, lang)}</span>
         <span className="muted nowrap">{fmtDateShort(trip.startedAt, lang)}</span>
       </div>
       <div className="muted">

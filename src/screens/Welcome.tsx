@@ -13,8 +13,7 @@ export function Welcome() {
         <p className="kicker">{t('institute')}</p>
         <h1 className="display">
           {t('welcomeTitle')}
-          <br />
-          Brandenburg
+          {t('welcomeTitle2') && <><br />{t('welcomeTitle2')}</>}
         </h1>
         <p className="lead">{t('welcomeIntro')}</p>
       </div>

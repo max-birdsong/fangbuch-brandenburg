@@ -53,7 +53,7 @@ export function TripForm({ id }: { id?: string }) {
       const cs = (await db.catches.where('tripId').equals(id).toArray()).filter((c) => !c.deleted);
       setFish(cs.sort((a, b) => a.updatedAt - b.updatedAt).map((c) => ({
         key: uuid(), species: c.species, count: c.count, kept: c.kept,
-        cm: c.lengthCm === null ? '' : String(c.lengthCm).replace('.', lang === 'de' ? ',' : '.')
+        cm: c.lengthCm === null ? '' : String(c.lengthCm).replace('.', lang === 'en' ? '.' : ',')
       })));
       setLoaded(true);
     })();

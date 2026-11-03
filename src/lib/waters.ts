@@ -1,3 +1,5 @@
+import { searchAliases } from './waterNames';
+
 // Water bodies: loaded from /waters.json (cached by the service worker, so it works offline).
 // Nearest-water matching runs entirely on the phone; coordinates never leave the device.
 
@@ -94,9 +96,11 @@ export function nearestWaters(file: WatersFile, lat: number, lon: number, maxM =
 export const autoSelectRadius = (file: WatersFile) =>
   file.waters.some((w) => w.geom) ? 300 : 3000; // starter list only has rough points
 
+// German umlauts as ae/oe/ue (as Germans type them), Polish letters without accents (ł -> l, ą -> a).
 const norm = (s: string) =>
   s.toLowerCase()
-    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss').replace(/ł/g, 'l')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9 ]+/g, ' ');
 
 /** Simple word search: every typed word must appear in the name or region. */
@@ -105,9 +109,10 @@ export function searchWaters(file: WatersFile, q: string, limit = 8): Water[] {
   if (!words.length) return [];
   return file.waters
     .map((w) => {
-      const hay = norm(`${w.name} ${w.region}`);
+      const extra = searchAliases(w.name);
+      const hay = norm(`${w.name} ${extra} ${w.region}`);
       if (!words.every((x) => hay.includes(x))) return null;
-      const score = norm(w.name).startsWith(words[0]) ? 0 : 1;
+      const score = norm(w.name).startsWith(words[0]) || norm(extra).split(' ').some((x) => x && x.startsWith(words[0])) ? 0 : 1;
       return { w, score };
     })
     .filter((x): x is { w: Water; score: number } => !!x)
