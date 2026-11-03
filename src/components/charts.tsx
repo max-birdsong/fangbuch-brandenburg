@@ -76,7 +76,7 @@ export function Columns({ data, label, valueLabel }: { data: { x: string; xLabel
   const every = Math.ceil(data.length / Math.max(1, Math.floor(plotW / 56)));
   return (
     <div ref={ref} className="viz-wrap">
-      <svg width={width} height={H} role="img" aria-label={label}>
+      <svg width={width} height={H} role="group" aria-label={label}>
         {ticks.map((t) => {
           const y = padT + plotH - (t / max) * plotH;
           return (
@@ -94,7 +94,7 @@ export function Columns({ data, label, valueLabel }: { data: { x: string; xLabel
               <path d={vBar(x, padT + plotH, bw, h)} className="viz-s1" />
               {i % every === 0 && <text x={x + bw / 2} y={H - 6} className="viz-axis" textAnchor="middle">{d.xLabel}</text>}
               <rect
-                x={padL + i * band} y={padT} width={band} height={plotH} fill="transparent" tabIndex={0}
+                x={padL + i * band} y={padT} width={band} height={plotH} fill="transparent" tabIndex={0} role="img"
                 aria-label={`${d.xLabel}: ${valueLabel(d.value)}`}
                 onMouseEnter={() => tip.show(Math.min(x, width - 150), padT, <><strong>{d.xLabel}</strong><br />{valueLabel(d.value)}</>)}
                 onFocus={() => tip.show(Math.min(x, width - 150), padT, <><strong>{d.xLabel}</strong><br />{valueLabel(d.value)}</>)}
@@ -119,7 +119,7 @@ export function HBars({ rows, max, label }: { rows: { key: string; label: string
   const H = rows.length * rowH;
   return (
     <div ref={ref} className="viz-wrap">
-      <svg width={width} height={H} role="img" aria-label={label}>
+      <svg width={width} height={H} role="group" aria-label={label}>
         {rows.map((r, i) => {
           const y = i * rowH;
           const w = (r.value / m) * plotW;
@@ -129,7 +129,7 @@ export function HBars({ rows, max, label }: { rows: { key: string; label: string
               <path d={hBar(0, y + 20, w, bh)} className="viz-s1" />
               <text x={Math.max(w, 0) + 6} y={y + 32} className="viz-value">{r.valueText}</text>
               <rect
-                x={0} y={y} width={width} height={rowH} fill="transparent" tabIndex={0} aria-label={`${r.label}: ${r.valueText}`}
+                x={0} y={y} width={width} height={rowH} fill="transparent" tabIndex={0} role="img" aria-label={`${r.label}: ${r.valueText}`}
                 onMouseEnter={() => tip.show(Math.min(w, width - 170), y + 40, r.tip)} onFocus={() => tip.show(Math.min(w, width - 170), y + 40, r.tip)}
                 onMouseLeave={tip.hide} onBlur={tip.hide}
               />
@@ -156,7 +156,7 @@ export function StackedHBars({ rows, aName, bName, label }: { rows: { key: strin
         <span><i className="viz-key viz-k1" />{aName}</span>
         <span><i className="viz-key viz-k2" />{bName}</span>
       </div>
-      <svg width={width} height={H} role="img" aria-label={label}>
+      <svg width={width} height={H} role="group" aria-label={label}>
         {rows.map((r, i) => {
           const y = i * rowH;
           const wa = (r.a / m) * plotW;
@@ -175,7 +175,7 @@ export function StackedHBars({ rows, aName, bName, label }: { rows: { key: strin
               )}
               <text x={wa + wb + 6} y={y + 32} className="viz-value">{r.a + r.b}</text>
               <rect
-                x={0} y={y} width={width} height={rowH} fill="transparent" tabIndex={0} aria-label={`${r.label}: ${aName} ${r.a}, ${bName} ${r.b}`}
+                x={0} y={y} width={width} height={rowH} fill="transparent" tabIndex={0} role="img" aria-label={`${r.label}: ${aName} ${r.a}, ${bName} ${r.b}`}
                 onMouseEnter={() => tip.show(Math.min(wa + wb, width - 150), y + 40, body)} onFocus={() => tip.show(Math.min(wa + wb, width - 150), y + 40, body)}
                 onMouseLeave={tip.hide} onBlur={tip.hide}
               />
@@ -198,7 +198,7 @@ export function DotScale({ rows, label, lowText, highText }: { rows: { key: stri
   const H = rows.length * rowH + 22;
   return (
     <div ref={ref} className="viz-wrap">
-      <svg width={width} height={H} role="img" aria-label={label}>
+      <svg width={width} height={H} role="group" aria-label={label}>
         {[1, 2, 3, 4, 5].map((v) => (
           <text key={v} x={xOf(v)} y={H - 6} className="viz-axis" textAnchor="middle">{v}</text>
         ))}
@@ -213,7 +213,7 @@ export function DotScale({ rows, label, lowText, highText }: { rows: { key: stri
               {r.mean !== null && <circle cx={xOf(r.mean)} cy={y + 27} r={6} className="viz-dot" />}
               <text x={width - valueW + 6} y={y + 31} className="viz-value">{r.mean === null ? '–' : r.mean.toFixed(1)}</text>
               <rect
-                x={0} y={y} width={width} height={rowH} fill="transparent" tabIndex={0} aria-label={`${r.label}: ${r.mean === null ? 'no data' : r.mean.toFixed(2)}`}
+                x={0} y={y} width={width} height={rowH} fill="transparent" tabIndex={0} role="img" aria-label={`${r.label}: ${r.mean === null ? 'no data' : r.mean.toFixed(2)}`}
                 onMouseEnter={() => tip.show(r.mean === null ? padX : Math.min(xOf(r.mean), width - 170), y + 36, body)}
                 onFocus={() => tip.show(r.mean === null ? padX : Math.min(xOf(r.mean), width - 170), y + 36, body)}
                 onMouseLeave={tip.hide} onBlur={tip.hide}

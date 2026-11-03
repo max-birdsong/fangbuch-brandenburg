@@ -42,6 +42,19 @@ export function TripForm({ id }: { id?: string }) {
   const [targets, setTargets] = useState<string[]>([]);
   const [fish, setFish] = useState<FishDraft[]>([]);
   const [sheet, setSheet] = useState<{ fish: FishDraft | null } | null>(null);
+  // The phone's back button closes the fish screen instead of leaving the form.
+  const sheetOpen = !!sheet;
+  useEffect(() => {
+    if (!sheetOpen) return;
+    let pushed = true;
+    history.pushState({ fishSheet: true }, '');
+    const onPop = () => { pushed = false; setSheet(null); };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      if (pushed) history.back();
+    };
+  }, [sheetOpen]);
   const [satisfaction, setSatisfaction] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -209,7 +222,7 @@ export function TripForm({ id }: { id?: string }) {
               {fish.map((f) => (
                 <li key={f.key}>
                   <button type="button" className="fish-line" onClick={() => setSheet({ fish: f })}>
-                    {fishLine(f, label(SPECIES, f.species, lang), f.kept ? t('kept') : t('released'), t('pieces', { n: f.count }), lang)}
+                    {fishLine(f, label(SPECIES, f.species, lang), f.count > 1 ? (f.kept ? t('keptMany') : t('releasedMany')) : f.kept ? t('kept') : t('released'), t('pieces', { n: f.count }), lang)}
                   </button>
                 </li>
               ))}
