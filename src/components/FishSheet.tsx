@@ -24,6 +24,8 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
   const [cm, setCm] = useState(fish?.cm ?? '');
   const [kept, setKept] = useState<boolean | null>(fish?.kept ?? null);
   const [bulk, setBulk] = useState((fish?.count ?? 1) > 1);
+  // Length is required for a single fish, unless the angler ticks "not measured".
+  const [notMeasured, setNotMeasured] = useState(!!fish && fish.count === 1 && fish.cm.trim() === '');
   const [count, setCount] = useState(fish && fish.count > 1 ? String(fish.count) : '');
   const [err, setErr] = useState<string | null>(null);
 
@@ -41,10 +43,11 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
     if (!species) return setErr(t('pickSpecies'));
     const n = bulk ? Number(count) : 1;
     if (bulk && !(Number.isInteger(n) && n >= 2 && n <= 9999)) return setErr(t('countInvalid'));
-    const len = bulk ? null : parseCm(cm);
+    const len = bulk || notMeasured ? null : parseCm(cm);
+    if (!bulk && !notMeasured && len === null) return setErr(t('lengthRequired'));
     if (len !== null && !(len > 0 && len < 400)) return setErr(t('lengthInvalid'));
     if (kept === null) return setErr(t('pickFate'));
-    onSave({ species, count: n, cm: bulk ? '' : cm.trim(), kept });
+    onSave({ species, count: n, cm: bulk || notMeasured ? '' : cm.trim(), kept });
   };
 
   return (
@@ -73,10 +76,22 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
             <input className="fish-len" inputMode="numeric" value={count} onChange={(e) => { setCount(e.target.value.replace(/\D/g, '')); setErr(null); }} />
           </label>
         ) : (
-          <label className="input-label">
-            {t('lengthOptional')}
-            <input className="fish-len" inputMode="decimal" placeholder="cm" value={cm} onChange={(e) => { setCm(e.target.value); setErr(null); }} />
-          </label>
+          <div className="stack-sm">
+            <label className="input-label">
+              {t('lengthLabel')}
+              <input
+                className="fish-len"
+                inputMode="decimal"
+                placeholder="cm"
+                value={cm}
+                onChange={(e) => { setCm(e.target.value); if (e.target.value.trim()) setNotMeasured(false); setErr(null); }}
+              />
+            </label>
+            <label className="check small">
+              <input type="checkbox" checked={notMeasured} onChange={(e) => { setNotMeasured(e.target.checked); if (e.target.checked) setCm(''); setErr(null); }} />
+              {t('notMeasured')}
+            </label>
+          </div>
         )}
 
         <div className="stack-sm">
