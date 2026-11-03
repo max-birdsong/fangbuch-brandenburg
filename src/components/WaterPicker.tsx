@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLang } from '../app';
 import type { WaterChoice } from '../lib/db';
 import { useKV, useWaters } from '../lib/hooks';
+import { localWaterName } from '../lib/waterNames';
 import { autoSelectRadius, getPosition, locationPermission, nearestWaters, searchWaters, type Water } from '../lib/waters';
 import { IconPin, IconSearch } from './ui';
 
@@ -16,7 +17,7 @@ export interface WaterValue {
 type Geo = 'idle' | 'locating' | 'done' | 'denied';
 
 export function WaterPicker({ value, onChange, autoLocate = true }: { value: WaterValue | null; onChange: (v: WaterValue | null) => void; autoLocate?: boolean }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { file } = useWaters();
   const recentIds = useKV<string[]>('recentWaters', []);
   const [geo, setGeo] = useState<Geo>('idle');
@@ -70,7 +71,7 @@ export function WaterPicker({ value, onChange, autoLocate = true }: { value: Wat
     return (
       <div className="card selected-water">
         <div className="stack-xs">
-          <span className="card-title">{value.waterOther || value.waterName}</span>
+          <span className="card-title">{value.waterOther || localWaterName(value.waterName, lang)}</span>
           {value.choice === 'gps' && value.gpsDistanceM !== null && (
             <span className="small teal">
               <IconPin /> {fmtDist(value.gpsDistanceM)}
@@ -84,7 +85,7 @@ export function WaterPicker({ value, onChange, autoLocate = true }: { value: Wat
 
   const WaterBtn = ({ w, choice, dist }: { w: Water; choice: WaterChoice; dist?: number }) => (
     <button type="button" className={`option ${value?.waterId === w.id ? 'on' : ''}`} onClick={() => pick(w, choice, dist ?? null)}>
-      <span className="option-title">{w.name}</span>
+      <span className="option-title">{localWaterName(w.name, lang)}</span>
       <span className="option-sub">{dist !== undefined ? `${fmtDist(dist)} · ${w.region}` : w.region}</span>
     </button>
   );

@@ -8,7 +8,7 @@ export const uuid = () =>
         return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
       });
 
-const locale = (lang: Lang) => (lang === 'de' ? 'de-DE' : 'en-GB');
+const locale = (lang: Lang) => ({ de: 'de-DE', en: 'en-GB', pl: 'pl-PL' })[lang];
 
 export const fmtTime = (iso: string, lang: Lang) =>
   new Date(iso).toLocaleTimeString(locale(lang), { hour: '2-digit', minute: '2-digit' });

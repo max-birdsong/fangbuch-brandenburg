@@ -3,7 +3,8 @@ import type { Lang } from '../data/catalog';
 
 const LANGS: [Lang, string, string][] = [
   ['de', 'DE', 'Deutsch'],
-  ['en', 'EN', 'English']
+  ['en', 'EN', 'English'],
+  ['pl', 'PL', 'Polski']
 ];
 
 export function LangSwitch({ dark }: { dark?: boolean }) {
