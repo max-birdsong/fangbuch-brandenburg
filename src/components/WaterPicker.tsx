@@ -86,7 +86,7 @@ export function WaterPicker({ value, onChange, autoLocate = true }: { value: Wat
   const WaterBtn = ({ w, choice, dist }: { w: Water; choice: WaterChoice; dist?: number }) => (
     <button type="button" className={`option ${value?.waterId === w.id ? 'on' : ''}`} onClick={() => pick(w, choice, dist ?? null)}>
       <span className="option-title">{localWaterName(w.name, lang)}</span>
-      <span className="option-sub">{dist !== undefined ? `${fmtDist(dist)} · ${w.region}` : w.region}</span>
+      <span className="option-sub">{[dist !== undefined ? fmtDist(dist) : null, w.alt, w.region].filter(Boolean).join(' · ')}</span>
     </button>
   );
 

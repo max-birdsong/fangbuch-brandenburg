@@ -1,8 +1,15 @@
-// Builds public/waters.json from OpenStreetMap (via the Overpass API) for all of Brandenburg.
+// Builds public/waters.json from OpenStreetMap (via the Overpass API) for all of Brandenburg and
+// the neighbouring Polish voivodeships Zachodniopomorskie and Lubuskie.
 //
 //   npm run import:waters                       # lakes >= 5 ha, rivers/canals in ~10 km sections
 //   npm run import:waters -- --min-ha=2 --section-km=8
-//   npm run import:waters -- --from=overpass.json   # process a saved Overpass response instead
+//   npm run import:waters -- --from=bb.json --from-pl=pl.json   # process saved Overpass responses instead
+//   npm run import:waters -- --no-pl                             # Brandenburg only
+//
+// Brandenburg and Poland are queried and processed separately, so adding Poland never changes the
+// ids of Brandenburg waters. Polish waters keep their Polish name (German name, if OSM has one, as
+// "alt" for search), get ids starting with "pl-" and cc "PL". Border rivers (Oder, Neiße) stay in
+// the Brandenburg part; the Polish part only adds the stretches that run entirely through Poland.
 //
 // Output per water: id, name, type (lake/river/canal), region (Landkreis), centroid lat/lon and a
 // simplified geometry used on the phone to find the nearest water (point-in/near-polygon for lakes,
@@ -19,9 +26,13 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/
 const MIN_HA = Number(args['min-ha'] ?? 5);
 const SECTION_KM = Number(args['section-km'] ?? 10);
 const SIMPLIFY_M = Number(args['simplify-m'] ?? 25);
-const ENDPOINT = args.endpoint ?? 'https://overpass-api.de/api/interpreter';
+const ENDPOINTS = args.endpoint ? [args.endpoint] : [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+];
 
-const QUERY = `
+const QUERY_BB = `
 [out:json][timeout:300];
 area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
 (
@@ -35,6 +46,21 @@ area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
   way["waterway"="river"]["name"~"Elbe"](51.35,13.05,51.55,13.35);
   node["place"~"^(city|town|village)$"]["name"](area.bb);
   relation["boundary"="administrative"]["admin_level"="6"](area.bb);
+);
+out geom;
+`;
+
+// Polish part: one query per voivodeship (old letter or new number ISO code). Public Overpass servers
+// rate-limit by IP after a big query, so main() pauses between queries.
+const QUERY_PL = (code) => `
+[out:json][timeout:600][maxsize:1073741824];
+area["ISO3166-2"~"^PL-(${code})$"][admin_level=4]->.pl;
+(
+  way["natural"="water"]["name"](area.pl);
+  relation["natural"="water"]["name"](area.pl);
+  way["waterway"~"^(river|canal)$"]["name"](area.pl);
+  node["place"~"^(city|town|village)$"]["name"](area.pl);
+  relation["boundary"="administrative"]["admin_level"="6"](area.pl);
 );
 out geom;
 `;
@@ -124,24 +150,37 @@ const geomOf = (g) => (g ?? []).map((p) => [p.lon, p.lat]);
 const slug = (s) => s.toLowerCase()
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
   .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// Polish letters to ASCII for ids ("Łęknica" -> "leknica"). Only used for the Polish part.
+const translit = (s) => s.replace(/ł/g, 'l').replace(/Ł/g, 'L').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 // ------------------------------------------------------------------ main processing
 // Prefer the German name; map bilingual / Polish names of the border rivers to the German one.
-export function waterName(tags) {
-  const raw = (tags?.['name:de'] || tags?.name || '').trim();
+export function waterName(tags, pl = false) {
+  const raw = (pl ? tags?.name || tags?.['name:pl'] : tags?.['name:de'] || tags?.name || '')?.trim() ?? '';
   if (!raw) return '';
   if (/^(Oder|Odra)(\s*[-/–]\s*(Oder|Odra))?$/i.test(raw)) return 'Oder';
   if (/^((Lausitzer\s+)?Neiße|Nysa\s+Łużycka)(\s*[-/–]\s*.*)?$/i.test(raw)) return 'Neiße';
   if (/^(Elbe|Łaba|Labe)(\s*[-/–]\s*.*)?$/i.test(raw)) return 'Elbe';
   // Waters on the Polish side picked up by the border-river boxes have only Polish names: skip them.
-  if (!tags?.['name:de'] && /[łśżźćńąę]/i.test(raw) && !/[äöüß]/i.test(raw)) return '';
+  if (!pl && !tags?.['name:de'] && /[łśżźćńąę]/i.test(raw) && !/[äöüß]/i.test(raw)) return '';
   return raw;
 }
 
 // Region label: German name of the Landkreis without the Sorbian part ("Cottbus - Chóśebuz" -> "Cottbus").
 const regionName = (tags) => (tags?.['name:de'] || tags?.name || '').split(/\s+-\s+/)[0].trim();
+// Polish powiat label: "powiat gryfiński" -> "Powiat gryfiński (PL)", "Szczecin" -> "Szczecin (PL)".
+const regionNamePL = (tags) => {
+  const n = (tags?.name || '').trim();
+  return n ? `${n[0].toUpperCase()}${n.slice(1)} (PL)` : '';
+};
 
-export function buildWaters(osm) {
+/**
+ * opts.pl: build the Polish part (Polish names, "pl-" ids, rivers clipped to the Polish powiats).
+ * opts.skipNear: a point test; Polish river points near Brandenburg are dropped (the Brandenburg part has them).
+ * Returns the waters file plus `near`, the "in or within 1 km of this area" test for the next pass.
+ */
+export function buildWaters(osm, opts = {}) {
+  const pl = !!opts.pl;
   const els = osm.elements ?? [];
 
   // Counties (Landkreise / kreisfreie Städte) as regions.
@@ -150,15 +189,23 @@ export function buildWaters(osm) {
     .map((r) => {
       const rings = joinChains((r.members ?? []).filter((m) => m.role === 'outer' && m.geometry).map((m) => geomOf(m.geometry)))
         .filter((c) => c.length > 3);
-      return { name: regionName(r.tags), rings, c: rings.length ? centroid(rings.flat()) : null };
+      return { name: pl ? regionNamePL(r.tags) : regionName(r.tags), rings, c: rings.length ? centroid(rings.flat()) : null };
     })
     .filter((c) => c.name && c.rings.length);
+  // Simplified rings with bounding boxes for fast point-in-area tests (rivers have many points).
+  const fastRings = counties.flatMap((c) => c.rings.map((r) => {
+    const ring = simplify(r, 100);
+    const xs = ring.map((p) => p[0]), ys = ring.map((p) => p[1]);
+    return { ring, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+  }));
+  const inArea = (pt) => fastRings.some((f) => pt[0] >= f.x0 && pt[0] <= f.x1 && pt[1] >= f.y0 && pt[1] <= f.y1 && pointInRing(pt, f.ring));
+  const bbox = fastRings.reduce((b, f) => [Math.min(b[0], f.x0), Math.max(b[1], f.x1), Math.min(b[2], f.y0), Math.max(b[3], f.y1)], [180, -180, 90, -90]);
   // Inside a county, else the nearest county (border rivers lie on the state boundary).
   const regionOf = (pt) => {
     const hit = counties.find((c) => c.rings.some((ring) => pointInRing(pt, ring)));
     if (hit) return hit.name;
     const f = toXY(pt[1]);
-    let best = 'Brandenburg', bestD = Infinity;
+    let best = pl ? 'Polen' : 'Brandenburg', bestD = Infinity;
     for (const c of counties) {
       for (const ring of c.rings) {
         for (let i = 0; i < ring.length; i += 5) {
@@ -172,7 +219,7 @@ export function buildWaters(osm) {
 
   const places = els
     .filter((e) => e.type === 'node' && e.tags?.place && e.tags?.name)
-    .map((n) => ({ name: regionName(n.tags), rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
+    .map((n) => ({ name: pl ? n.tags.name.trim() : regionName(n.tags), rank: { city: 3, town: 2, village: 1 }[n.tags.place] ?? 0, xy: [n.lon, n.lat] }));
   const nearestPlace = (pt, minRank = 1, exclude = new Set()) => {
     const f = toXY(pt[1]);
     const p = f(pt);
@@ -190,7 +237,8 @@ export function buildWaters(osm) {
   // Is a point in Brandenburg or within ~1 km of it? Used to clip border rivers to the Brandenburg side.
   const vertices = counties.flatMap((c) => c.rings.flatMap((r) => r.filter((_, i) => i % 3 === 0)));
   const nearBB = (pt) => {
-    if (counties.some((c) => c.rings.some((ring) => pointInRing(pt, ring)))) return true;
+    if (pt[0] < bbox[0] - 0.03 || pt[0] > bbox[1] + 0.03 || pt[1] < bbox[2] - 0.02 || pt[1] > bbox[3] + 0.02) return false;
+    if (inArea(pt)) return true;
     const f = toXY(pt[1]);
     const p = f(pt);
     for (const v of vertices) {
@@ -200,17 +248,29 @@ export function buildWaters(osm) {
     return false;
   };
   const BORDER = new Set(['Oder', 'Neiße', 'Elbe']);
+  // Polish part: keep river points inside the selected powiats and not next to Brandenburg.
+  const keepPL = (pt) => inArea(pt) && !(opts.skipNear && opts.skipNear(pt));
 
   // Rivers and canals: group ways by (type, name).
   const byName = new Map();
+  const riverAlt = new Map(); // Polish part: German name of a river, e.g. Warta -> Warthe
   for (const e of els) {
     if (e.type !== 'way' || !['river', 'canal'].includes(e.tags?.waterway)) continue;
-    const name = waterName(e.tags);
+    const name = waterName(e.tags, pl);
     if (!name) continue;
     const k = `${e.tags.waterway}|${name}`;
     if (!byName.has(k)) byName.set(k, []);
+    const deName = (e.tags['name:de'] || '').trim();
+    if (pl && deName && deName !== name && !riverAlt.has(k)) riverAlt.set(k, deName);
     const coords = geomOf(e.geometry);
-    if (BORDER.has(name) && counties.length) {
+    if (pl) {
+      let run = [];
+      for (const pt of coords) {
+        if (keepPL(pt)) run.push(pt);
+        else { if (run.length > 1) byName.get(k).push(run); run = []; }
+      }
+      if (run.length > 1) byName.get(k).push(run);
+    } else if (BORDER.has(name) && counties.length) {
       // Keep only the runs of points on the Brandenburg side.
       let run = [];
       for (const pt of coords) {
@@ -230,7 +290,7 @@ export function buildWaters(osm) {
   const lakes = [];
   for (const e of els) {
     if (e.tags?.natural !== 'water' || (e.type !== 'way' && e.type !== 'relation')) continue;
-    const name = waterName(e.tags);
+    const name = waterName(e.tags, pl);
     if (!name) continue;
     const wt = e.tags.water;
     if (wt && !['lake', 'reservoir', 'pond', 'oxbow', 'lagoon', 'basin'].includes(wt)) continue; // river areas etc.
@@ -243,7 +303,9 @@ export function buildWaters(osm) {
     const ha = rings.reduce((s, r) => s + ringAreaHa(r), 0);
     if (ha < MIN_HA) continue;
     const main = rings.slice().sort((a, b) => ringAreaHa(b) - ringAreaHa(a))[0];
-    lakes.push({ name, wt, rings, ha, c: centroid(main), rel: e.type === 'relation' });
+    const c = centroid(main);
+    const de = (e.tags['name:de'] || '').trim();
+    lakes.push({ name, wt, rings, ha, c, rel: e.type === 'relation', alt: pl && de && de !== name ? de : undefined });
   }
   // The same lake mapped twice (a way and a relation): same name, centres < 1 km apart -> keep the larger.
   lakes.sort((a, b) => b.ha - a.ha || Number(b.rel) - Number(a.rel));
@@ -260,6 +322,7 @@ export function buildWaters(osm) {
       region: regionOf([lon, lat]),
       lat: +lat.toFixed(5), lon: +lon.toFixed(5),
       ha: Math.round(l.ha),
+      ...(l.alt ? { alt: l.alt } : {}),
       geom: { t: 'poly', c: l.rings.map((r) => round(simplify(r, SIMPLIFY_M))) }
     });
   }
@@ -300,6 +363,7 @@ export function buildWaters(osm) {
       out.push({
         name: s.place ? `${name} bei ${s.place}` : name,
         type,
+        ...(riverAlt.has(k) ? { alt: riverAlt.get(k) } : {}),
         region: regionOf([lon, lat]),
         lat: +lat.toFixed(5), lon: +lon.toFixed(5),
         geom: { t: 'line', c: s.lines.map((l) => round(simplify(l, SIMPLIFY_M))) }
@@ -335,42 +399,103 @@ export function buildWaters(osm) {
   const usedIds = new Set();
   out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
   for (const w of out) {
-    const base = slug(w.name);
+    const base = pl ? `pl-${slug(translit(w.name))}` : slug(w.name);
     let id = base, n = 2;
     while (usedIds.has(id)) id = `${base}-${n++}`;
     usedIds.add(id);
     w.id = id;
   }
-  const waters = out.map(({ id, ...rest }) => ({ id, ...rest }));
+  const waters = out.map(({ id, ...rest }) => ({ id, ...rest, ...(pl ? { cc: 'PL' } : {}) }));
   const regions = [...new Set(waters.map((w) => w.region))].sort((a, b) => a.localeCompare(b, 'de'));
   return {
     version: 2,
     source: 'OpenStreetMap contributors (ODbL), via Overpass API',
     generated: new Date().toISOString().slice(0, 10),
     regions,
-    waters
+    waters,
+    near: nearBB
   };
 }
 
-async function main() {
-  let osm;
-  if (args.from) {
-    osm = JSON.parse(await readFile(args.from, 'utf8'));
-  } else {
-    console.log(`Querying Overpass (${ENDPOINT}) for Brandenburg waters, this can take a few minutes...`);
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'fangbuch-brandenburg-import' },
-      body: 'data=' + encodeURIComponent(QUERY)
-    });
-    if (!res.ok) throw new Error(`Overpass error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    osm = await res.json();
-    if (args.save) await writeFile(args.save, JSON.stringify(osm));
+/**
+ * Drops Polish entries anglers would never pick: harbour basins in Szczecin ("Basen ..."), numbered
+ * ditches ("820"), military areas, and waters already in the Brandenburg list (same name, < 3 km apart).
+ */
+export function cleanPL(bbWaters, plWaters) {
+  const near = (a, b) => { const f = toXY(a.lat); return dist(f([a.lon, a.lat]), f([b.lon, b.lat])) < 3000; };
+  return plWaters.filter((w) =>
+    !/^\d+$/.test(w.name) &&
+    !/^Basen\b/i.test(w.name) &&
+    !/teren wojskowy/i.test(w.name) &&
+    !bbWaters.some((b) => b.name === w.name && near(b, w)));
+}
+
+/** Brandenburg first, then (optionally) the Polish part; one file with Brandenburg regions listed first. */
+export function buildAll(osmBB, osmPL) {
+  const bb = buildWaters(osmBB);
+  const pl = osmPL ? buildWaters(osmPL, { pl: true, skipNear: bb.near }) : null;
+  const ids = new Set(bb.waters.map((w) => w.id));
+  const plWaters = cleanPL(bb.waters, (pl?.waters ?? []).filter((w) => !ids.has(w.id)));
+  const plRegions = [...new Set(plWaters.map((w) => w.region))].sort((a, b) => a.localeCompare(b, 'pl'));
+  return {
+    version: 3,
+    source: bb.source,
+    generated: bb.generated,
+    regions: [...bb.regions, ...plRegions],
+    waters: [...bb.waters, ...plWaters]
+  };
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Runs a query; on failure waits for the rate limit to clear and tries again (other servers on the way). */
+async function overpass(query, label) {
+  let last;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    for (const ep of ENDPOINTS) {
+      console.log(`Querying ${ep} for ${label} ...`);
+      try {
+        const res = await fetch(ep, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'fangbuch-brandenburg-import' },
+          body: 'data=' + encodeURIComponent(query)
+        });
+        if (!res.ok) throw new Error(`Overpass error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        const osm = await res.json();
+        if (osm.remark && /runtime error|timed out|out of memory/i.test(osm.remark)) throw new Error(osm.remark);
+        if (!osm.elements?.length) throw new Error('no elements (area not found?)');
+        console.log(`  ${osm.elements?.length ?? 0} elements`);
+        return osm;
+      } catch (e) {
+        last = e;
+        console.log(`  failed: ${String(e.message).split('\n')[0]}`);
+        await sleep(ep === ENDPOINTS[0] ? 120_000 : 15_000);
+      }
+    }
   }
-  const result = buildWaters(osm);
+  throw last;
+}
+
+const mergeOsm = (parts) => ({ elements: parts.flatMap((p) => p.elements ?? []) });
+
+async function main() {
+  const osmBB = args.from ? JSON.parse(await readFile(args.from, 'utf8')) : await overpass(QUERY_BB, 'Brandenburg');
+  let osmPL = null;
+  if (!('no-pl' in args)) {
+    if (args['from-pl']) osmPL = JSON.parse(await readFile(args['from-pl'], 'utf8'));
+    else if (!args.from) {
+      const parts = [];
+      for (const [code, label] of [['LB|08', 'Lubuskie'], ['ZP|32', 'Zachodniopomorskie']]) {
+        await sleep(90_000); // let the rate limit from the previous query clear
+        parts.push(await overpass(QUERY_PL(code), `${label} (Poland)`));
+      }
+      osmPL = mergeOsm(parts);
+    }
+  }
+  const result = buildAll(osmBB, osmPL);
   const json = JSON.stringify(result);
   await writeFile(new URL('../public/waters.json', import.meta.url), json + '\n');
-  const counts = result.waters.reduce((m, w) => ((m[w.type] = (m[w.type] ?? 0) + 1), m), {});
+  const counts = result.waters.reduce((m, w) => ((m[`${w.cc ?? 'DE'} ${w.type}`] = (m[`${w.cc ?? 'DE'} ${w.type}`] ?? 0) + 1), m), {});
   console.log(`Wrote ${result.waters.length} waters (${JSON.stringify(counts)}), ${(json.length / 1024 / 1024).toFixed(1)} MB`);
 }
 
