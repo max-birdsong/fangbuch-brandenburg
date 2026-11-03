@@ -50,19 +50,14 @@ area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
 out geom;
 `;
 
-// One query per voivodeship (Zachodniopomorskie, Lubuskie; old letter or new number ISO codes): one big query times out.
-const QUERY_PL = (code) => `
-[out:json][timeout:600][maxsize:1073741824];
-area["ISO3166-2"~"^PL-(${code})$"][admin_level=4]->.pl;
-(
-  way["natural"="water"]["name"](area.pl);
-  relation["natural"="water"]["name"](area.pl);
-  way["waterway"~"^(river|canal)$"]["name"](area.pl);
-  node["place"~"^(city|town|village)$"]["name"](area.pl);
-  relation["boundary"="administrative"]["admin_level"="6"](area.pl);
-);
-out geom;
-`;
+// Polish part, queried in small pieces (per voivodeship and per kind of feature): big queries time out.
+const PL_AREA = (voiv) => `area["name"="województwo ${voiv}"][admin_level=4]->.pl;`;
+const PL_PARTS = {
+  lakes: '(way["natural"="water"]["name"](area.pl); relation["natural"="water"]["name"](area.pl););',
+  rivers: 'way["waterway"~"^(river|canal)$"]["name"](area.pl);',
+  places: '(node["place"~"^(city|town|village)$"]["name"](area.pl); relation["boundary"="administrative"]["admin_level"="6"](area.pl););'
+};
+const QUERY_PL = (voiv, part) => `[out:json][timeout:600][maxsize:1073741824];\n${PL_AREA(voiv)}\n${PL_PARTS[part]}\nout geom;`;
 
 // ------------------------------------------------------------------ geometry helpers
 const toXY = (lat0) => {
@@ -469,9 +464,11 @@ async function main() {
     if (args['from-pl']) osmPL = JSON.parse(await readFile(args['from-pl'], 'utf8'));
     else if (!args.from) {
       const parts = [];
-      for (const [code, label] of [['ZP|32', 'Zachodniopomorskie'], ['LB|08', 'Lubuskie']]) {
-        await sleep(15_000); // be polite to the public Overpass servers
-        parts.push(await overpass(QUERY_PL(code), `${label} (Poland)`));
+      for (const voiv of ['zachodniopomorskie', 'lubuskie']) {
+        for (const part of Object.keys(PL_PARTS)) {
+          await sleep(10_000); // be polite to the public Overpass servers
+          parts.push(await overpass(QUERY_PL(voiv, part), `${part} in ${voiv} (Poland)`));
+        }
       }
       osmPL = mergeOsm(parts);
     }
