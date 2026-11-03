@@ -1,5 +1,5 @@
 // Builds public/waters.json from OpenStreetMap (via the Overpass API) for all of Brandenburg and
-// the two neighbouring Polish voivodeships (Zachodniopomorskie, Lubuskie).
+// the neighbouring Polish voivodeship Lubuskie.
 //
 //   npm run import:waters                       # lakes >= 5 ha, rivers/canals in ~10 km sections
 //   npm run import:waters -- --min-ha=2 --section-km=8
@@ -50,7 +50,7 @@ area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
 out geom;
 `;
 
-// Polish part: one query per voivodeship (old letter or new number ISO code). Public Overpass servers
+// Polish part: Lubuskie (old letter or new number ISO code). Public Overpass servers
 // rate-limit by IP after a big query, so main() pauses between queries.
 const QUERY_PL = (code) => `
 [out:json][timeout:600][maxsize:1073741824];
@@ -471,7 +471,7 @@ async function main() {
     if (args['from-pl']) osmPL = JSON.parse(await readFile(args['from-pl'], 'utf8'));
     else if (!args.from) {
       const parts = [];
-      for (const [code, label] of [['ZP|32', 'Zachodniopomorskie'], ['LB|08', 'Lubuskie']]) {
+      for (const [code, label] of [['LB|08', 'Lubuskie']]) {
         await sleep(90_000); // let the rate limit from the previous query clear
         parts.push(await overpass(QUERY_PL(code), `${label} (Poland)`));
       }
