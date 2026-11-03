@@ -40,6 +40,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     document.documentElement.lang = lang;
+    document.title = translate(lang, 'welcomeTitle'); // placeholder app name per language
   }, [lang]);
   const setLang = useCallback((l: Lang) => {
     setLangState(l);

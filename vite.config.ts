@@ -17,9 +17,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon.svg'],
       manifest: {
-        name: 'Fangbuch Brandenburg',
+        name: 'Fangbuch',
         short_name: 'Fangbuch',
-        description: 'Dein persönliches Fangbuch für die Gewässer Brandenburgs',
+        description: 'Dein persönliches Fangbuch für Brandenburg und Westpolen',
         lang: 'de',
         theme_color: '#0E4C5C',
         background_color: '#0E4C5C',

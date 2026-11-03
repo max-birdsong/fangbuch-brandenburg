@@ -3,7 +3,7 @@ import type { Lang } from './data/catalog';
 const de = {
   institute: 'Institut für Binnenfischerei',
   welcomeTitle: 'Fangbuch',
-  welcomeTitle2: 'Brandenburg',
+  welcomeTitle2: '',
   welcomeIntro: 'Dein persönliches Fangbuch für Flüsse und Seen in Brandenburg und Westpolen. Jeder Eintrag hilft der Fischereiforschung, auch Tage ohne Fang.',
   getStarted: 'Loslegen',
   haveAccount: 'Ich habe schon ein Konto',
@@ -127,7 +127,7 @@ const de = {
   deleteAccount: 'Konto und alle Daten löschen',
   deleteAccountQ: 'Wirklich dein Konto und alle Einträge endgültig löschen?',
   about: 'Über das Fangbuch',
-  aboutText: 'Das Fangbuch Brandenburg ist ein Projekt des Instituts für Binnenfischerei e.V. Potsdam-Sacrow. Deine Einträge helfen, die Fischbestände und die Angelfischerei in Brandenburg besser zu verstehen.',
+  aboutText: 'Das Fangbuch ist ein Projekt des Instituts für Binnenfischerei e.V. Potsdam-Sacrow für Anglerinnen und Angler in Brandenburg und Westpolen. Deine Einträge helfen, die Fischbestände und die Angelfischerei besser zu verstehen.',
   osm: 'Gewässerdaten © OpenStreetMap-Mitwirkende (ODbL)',
   version: 'Version',
 
@@ -193,8 +193,8 @@ export type StringKey = keyof typeof de;
 
 const en: Record<StringKey, string> = {
   institute: 'Institute of Inland Fisheries',
-  welcomeTitle: 'Catch Log',
-  welcomeTitle2: 'Brandenburg',
+  welcomeTitle: 'Catch log',
+  welcomeTitle2: '',
   welcomeIntro: 'Your personal fishing log for rivers and lakes in Brandenburg and western Poland. Every entry helps fisheries research, including days without a catch.',
   getStarted: 'Get started',
   haveAccount: 'I already have an account',
@@ -318,7 +318,7 @@ const en: Record<StringKey, string> = {
   deleteAccount: 'Delete account and all data',
   deleteAccountQ: 'Really delete your account and all entries permanently?',
   about: 'About the catch log',
-  aboutText: 'Fangbuch Brandenburg is a project of the Institute of Inland Fisheries (Institut für Binnenfischerei e.V.) Potsdam-Sacrow. Your entries help us understand fish stocks and recreational fishing in Brandenburg.',
+  aboutText: 'The catch log is a project of the Institute of Inland Fisheries (Institut für Binnenfischerei e.V.) Potsdam-Sacrow for anglers in Brandenburg and western Poland. Your entries help us understand fish stocks and recreational fishing.',
   osm: 'Water data © OpenStreetMap contributors (ODbL)',
   version: 'Version',
 
@@ -508,7 +508,7 @@ const pl: Record<StringKey, string> = {
   deleteAccount: 'Usuń konto i wszystkie dane',
   deleteAccountQ: 'Na pewno trwale usunąć konto i wszystkie wpisy?',
   about: 'O dzienniku',
-  aboutText: 'Fangbuch Brandenburg to projekt Institut für Binnenfischerei e.V. w Poczdamie-Sacrow (Niemcy). Twoje wpisy pomagają lepiej zrozumieć stan rybostanu i wędkarstwa w regionie Odry.',
+  aboutText: 'Dziennik połowów to projekt Institut für Binnenfischerei e.V. w Poczdamie-Sacrow (Niemcy) dla wędkarzy z Brandenburgii i zachodniej Polski. Twoje wpisy pomagają lepiej zrozumieć stan rybostanu i wędkarstwa.',
   osm: 'Dane o łowiskach © współtwórcy OpenStreetMap (ODbL)',
   version: 'Wersja',
 
