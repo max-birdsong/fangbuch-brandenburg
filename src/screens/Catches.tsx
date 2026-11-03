@@ -1,13 +1,23 @@
+import { useMemo, useState } from 'react';
 import { useLang } from '../app';
 import { BottomNav } from '../components/ui';
 import { TripCard } from '../components/TripCard';
 import { SPECIES, label } from '../data/catalog';
 import { useCatches, useTrips } from '../lib/hooks';
 
+const PAGE = 30;
+
 export function Catches() {
   const { t, lang } = useLang();
   const trips = useTrips();
   const catches = useCatches();
+  const [shown, setShown] = useState(PAGE);
+  // Catches grouped by day once (not filtered again for every card): stays fast with years of entries.
+  const byTrip = useMemo(() => {
+    const m = new Map<string, NonNullable<typeof catches>>();
+    for (const c of catches ?? []) m.set(c.tripId, [...(m.get(c.tripId) ?? []), c]);
+    return m;
+  }, [catches]);
   if (!trips || !catches) return <main className="screen with-nav" />;
 
   const tripIds = new Set(trips.map((tr) => tr.id));
@@ -41,9 +51,14 @@ export function Catches() {
           </ul>
         )}
         <h2 className="section-title">{t('allTrips')}</h2>
-        {trips.map((tr) => (
-          <TripCard key={tr.id} trip={tr} catches={catches.filter((c) => c.tripId === tr.id)} />
+        {trips.slice(0, shown).map((tr) => (
+          <TripCard key={tr.id} trip={tr} catches={byTrip.get(tr.id) ?? []} />
         ))}
+        {trips.length > shown && (
+          <button type="button" className="btn secondary" onClick={() => setShown(shown + PAGE)}>
+            {t('showMore', { n: Math.min(PAGE, trips.length - shown) })}
+          </button>
+        )}
       </div>
       <BottomNav active="catches" />
     </main>

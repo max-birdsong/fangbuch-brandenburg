@@ -309,3 +309,6 @@ input.fish-len { width: 120px; }
 
 /* Optional second line under the app name on the start screen */
 .display-sub { display: block; font-size: 0.5em; line-height: 1.15; margin-top: 6px; opacity: 0.85; }
+
+/* Restored draft of a new fishing day */
+.draft-note { background: #FFF4E5; border: 1px solid #F0C78A; border-radius: 12px; padding: 8px 14px; font-size: 15px; font-weight: 600; align-items: center; }
