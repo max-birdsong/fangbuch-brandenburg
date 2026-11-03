@@ -26,7 +26,11 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/
 const MIN_HA = Number(args['min-ha'] ?? 5);
 const SECTION_KM = Number(args['section-km'] ?? 10);
 const SIMPLIFY_M = Number(args['simplify-m'] ?? 25);
-const ENDPOINT = args.endpoint ?? 'https://overpass-api.de/api/interpreter';
+const ENDPOINTS = args.endpoint ? [args.endpoint] : [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+];
 
 const QUERY_BB = `
 [out:json][timeout:300];
@@ -46,9 +50,10 @@ area["ISO3166-2"="DE-BB"][admin_level=4]->.bb;
 out geom;
 `;
 
-const QUERY_PL = `
+// One query per voivodeship (Zachodniopomorskie, Lubuskie; old letter or new number ISO codes): one big query times out.
+const QUERY_PL = (code) => `
 [out:json][timeout:600][maxsize:1073741824];
-area["ISO3166-2"~"^PL-(ZP|LB|32|08)$"][admin_level=4]->.pl;
+area["ISO3166-2"~"^PL-(${code})$"][admin_level=4]->.pl;
 (
   way["natural"="water"]["name"](area.pl);
   relation["natural"="water"]["name"](area.pl);
@@ -426,18 +431,36 @@ export function buildAll(osmBB, osmPL) {
   };
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Runs a query, trying each public Overpass server up to twice. */
 async function overpass(query, label) {
-  console.log(`Querying Overpass (${ENDPOINT}) for ${label}, this can take a few minutes...`);
-  const res = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'fangbuch-brandenburg-import' },
-    body: 'data=' + encodeURIComponent(query)
-  });
-  if (!res.ok) throw new Error(`Overpass error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const osm = await res.json();
-  console.log(`  ${osm.elements?.length ?? 0} elements`);
-  return osm;
+  let last;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (const ep of ENDPOINTS) {
+      console.log(`Querying ${ep} for ${label} ...`);
+      try {
+        const res = await fetch(ep, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'fangbuch-brandenburg-import' },
+          body: 'data=' + encodeURIComponent(query)
+        });
+        if (!res.ok) throw new Error(`Overpass error ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        const osm = await res.json();
+        if (osm.remark && /runtime error|timed out|out of memory/i.test(osm.remark)) throw new Error(osm.remark);
+        console.log(`  ${osm.elements?.length ?? 0} elements`);
+        return osm;
+      } catch (e) {
+        last = e;
+        console.log(`  failed: ${String(e.message).split('\n')[0]}`);
+        await sleep(20_000);
+      }
+    }
+  }
+  throw last;
 }
+
+const mergeOsm = (parts) => ({ elements: parts.flatMap((p) => p.elements ?? []) });
 
 async function main() {
   const osmBB = args.from ? JSON.parse(await readFile(args.from, 'utf8')) : await overpass(QUERY_BB, 'Brandenburg');
@@ -445,8 +468,12 @@ async function main() {
   if (!('no-pl' in args)) {
     if (args['from-pl']) osmPL = JSON.parse(await readFile(args['from-pl'], 'utf8'));
     else if (!args.from) {
-      await new Promise((r) => setTimeout(r, 20_000)); // be polite to the public Overpass server
-      osmPL = await overpass(QUERY_PL, 'Zachodniopomorskie and Lubuskie (Poland)');
+      const parts = [];
+      for (const [code, label] of [['ZP|32', 'Zachodniopomorskie'], ['LB|08', 'Lubuskie']]) {
+        await sleep(15_000); // be polite to the public Overpass servers
+        parts.push(await overpass(QUERY_PL(code), `${label} (Poland)`));
+      }
+      osmPL = mergeOsm(parts);
     }
   }
   const result = buildAll(osmBB, osmPL);
