@@ -90,7 +90,7 @@ export function Profile() {
           <a className="card stack-xs" href="#/profile/edit">
             <span className="row between"><span className="strong">{t('aboutMe')}</span><span className="teal small strong">{t('edit')}</span></span>
             <span className="muted small">
-              {profile.yearsFishing} {t('years')} · {label(COUNTRIES, profile.homeCountry, lang)} {profile.homePostcode}
+              {[profile.yearsFishing !== null ? `${profile.yearsFishing} ${t('years')}` : null, `${label(COUNTRIES, profile.homeCountry, lang)} ${profile.homePostcode}`.trim()].filter(Boolean).join(' · ')}
             </span>
             <span className="muted small">{label(CLUB_STATUS, profile.clubStatus, lang)}{profile.clubName ? ` (${profile.clubName})` : ''}</span>
             {licenses && <span className="muted small">{licenses}</span>}

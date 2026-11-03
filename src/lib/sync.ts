@@ -4,6 +4,7 @@
 import { db, getKV, setKV, surveyKey, wipeLocal, type Catch, type Profile, type SurveyResponse, type Trip } from './db';
 import { SURVEY } from '../data/survey';
 import { supabase } from './supabase';
+import { signInAnonymouslyOnce } from './anon';
 
 type Listener = (s: SyncState) => void;
 export type SyncState = { running: boolean; lastOk: number | null; lastError: string | null };
@@ -95,10 +96,9 @@ export async function syncNow(): Promise<void> {
     const owner = await getKV<string | null>('ownerId', null);
     const prof = await getKV<Profile | null>('profile', null);
     if (owner || !prof) return;
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error || !data.user) return;
-    userId = data.user.id;
-    await setKV('ownerId', userId);
+    const id = await signInAnonymouslyOnce().catch(() => null);
+    if (!id) return;
+    userId = id;
   }
   emit({ running: true, lastError: null });
   try {
@@ -157,11 +157,13 @@ export async function pullAll(): Promise<void> {
   const userId = sess.session?.user.id;
   if (!userId) return;
 
+  // Always filter by the signed-in angler: admins may read everyone's rows, and those must
+  // never end up in the admin's own log on the phone.
   const [{ data: p }, { data: trips }, { data: catches }, { data: survey }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
-    supabase.from('trips').select('*').eq('deleted', false),
-    supabase.from('catches').select('*').eq('deleted', false),
-    supabase.from('survey_responses').select('*').eq('survey_id', SURVEY.id).maybeSingle()
+    supabase.from('trips').select('*').eq('user_id', userId).eq('deleted', false),
+    supabase.from('catches').select('*').eq('user_id', userId).eq('deleted', false),
+    supabase.from('survey_responses').select('*').eq('user_id', userId).eq('survey_id', SURVEY.id).maybeSingle()
   ]);
 
   if (survey) {

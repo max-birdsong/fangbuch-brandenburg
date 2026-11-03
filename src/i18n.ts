@@ -95,6 +95,8 @@ const de = {
   fate: 'Was ist mit dem Fisch passiert?',
   released: 'Zurückgesetzt',
   kept: 'Entnommen',
+  releasedMany: 'Zurückgesetzt',
+  keptMany: 'Entnommen',
 
   satQ: 'Wie zufrieden warst du mit dem Angeltag?',
   satLow: 'gar nicht',
@@ -289,6 +291,8 @@ const en: Record<StringKey, string> = {
   fate: 'What happened to the fish?',
   released: 'Released',
   kept: 'Kept',
+  releasedMany: 'Released',
+  keptMany: 'Kept',
 
   satQ: 'How satisfied were you with your fishing day?',
   satLow: 'not at all',
@@ -482,6 +486,8 @@ const pl: Record<StringKey, string> = {
   fate: 'Co się stało z rybą?',
   released: 'Wypuszczona',
   kept: 'Zabrana',
+  releasedMany: 'Wypuszczone',
+  keptMany: 'Zabrane',
 
   satQ: 'Jak bardzo jesteś zadowolony(-a) z tego dnia na rybach?',
   satLow: 'wcale',
