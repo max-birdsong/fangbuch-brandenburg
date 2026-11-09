@@ -190,7 +190,7 @@ const de = {
     'Was wir speichern: deine Angaben aus dem Profil (Angeljahre, Postleitzahl, Verein, Angelkarten), deine Angeltage (Gewässer, Zeit, Methode, Zufriedenheit), Fänge (Art, Anzahl, Länge, entnommen oder zurückgesetzt) und, falls du teilnimmst, deine Antworten in der freiwilligen Umfrage (z. B. Geburtsjahr, Motive fürs Angeln). Wenn du dein Konto sicherst, auch deine E-Mail-Adresse.',
     'Was wir nicht speichern: deinen genauen Standort. Die Ortung findet nur auf deinem Gerät statt, um das nächste Gewässer vorzuschlagen.',
     'Zweck: wissenschaftliche Auswertung zur Angelfischerei und zu Fischbeständen in Brandenburg. Ergebnisse werden nur zusammengefasst veröffentlicht, nie mit Namen oder E-Mail.',
-    'Deine Rechte: Du kannst deine Daten jederzeit in der App herunterladen und dein Konto mit allen Daten löschen. Fragen an: max.birdsong@ifb-potsdam.de. Externer Datenschutzbeauftragter: dabag technology GmbH, datenschutz@dabag.de.'
+    'Deine Rechte: Du kannst deine Daten jederzeit in der App herunterladen und dein Konto mit allen Daten löschen. Externer Datenschutzbeauftragter: dabag technology GmbH, datenschutz@dabag.de.'
   ].join('\n\n')
 };
 
@@ -386,7 +386,7 @@ const en: Record<StringKey, string> = {
     'What we store: your profile details (years fishing, postcode, club, licenses), your fishing days (water, time, method, satisfaction), catches (species, number, length, kept or released) and, if you take part, your answers to the optional survey (e.g. birth year, reasons for fishing). If you secure your account, also your email address.',
     'What we do not store: your exact location. Location is only used on your device to suggest the nearest water.',
     'Purpose: scientific analysis of recreational fishing and fish stocks in Brandenburg. Results are only published in aggregate, never with names or emails.',
-    'Your rights: you can download your data in the app at any time and delete your account with all data. Questions: max.birdsong@ifb-potsdam.de. External data protection officer: dabag technology GmbH, datenschutz@dabag.de.'
+    'Your rights: you can download your data in the app at any time and delete your account with all data. External data protection officer: dabag technology GmbH, datenschutz@dabag.de.'
   ].join('\n\n')
 };
 
@@ -581,7 +581,7 @@ const pl: Record<StringKey, string> = {
     'Co zapisujemy: dane z Twojego profilu (lata wędkowania, kod pocztowy, koło lub klub, zezwolenia), Twoje dni na rybach (łowisko, czas, metoda, zadowolenie), połowy (gatunek, liczba, długość, zabrana czy wypuszczona) oraz, jeśli weźmiesz udział, Twoje odpowiedzi w dobrowolnej ankiecie (np. rok urodzenia, powody wędkowania). Jeśli zabezpieczysz konto, także Twój adres e-mail.',
     'Czego nie zapisujemy: Twojej dokładnej lokalizacji. Lokalizacja jest ustalana tylko na Twoim urządzeniu, by zaproponować najbliższe łowisko.',
     'Cel: naukowa analiza wędkarstwa i rybostanu w regionie Odry. Wyniki publikujemy wyłącznie w formie zbiorczej, nigdy z imieniem i nazwiskiem ani adresem e-mail.',
-    'Twoje prawa: w każdej chwili możesz pobrać swoje dane w aplikacji i usunąć konto ze wszystkimi danymi. Pytania: max.birdsong@ifb-potsdam.de. Zewnętrzny inspektor ochrony danych: dabag technology GmbH, datenschutz@dabag.de.'
+    'Twoje prawa: w każdej chwili możesz pobrać swoje dane w aplikacji i usunąć konto ze wszystkimi danymi. Zewnętrzny inspektor ochrony danych: dabag technology GmbH, datenschutz@dabag.de.'
   ].join('\n\n')
 };
 
