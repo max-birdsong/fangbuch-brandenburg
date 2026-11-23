@@ -7,7 +7,6 @@ const de = {
   welcomeIntro: 'Dein persönliches Fangbuch für Flüsse und Seen in Brandenburg und Westpolen. Jeder Eintrag hilft der Fischereiforschung, auch Tage ohne Fang.',
   getStarted: 'Loslegen',
   startHint: 'Anmeldung mit E-Mail-Adresse. So geht dein Fangbuch auch auf einem neuen Handy nicht verloren.',
-  haveAccount: 'Ich habe schon ein Konto',
   demoMode: 'Demo-Modus: Daten bleiben nur auf diesem Gerät.',
 
   signInTitle: 'Mit E-Mail anmelden',
@@ -145,12 +144,8 @@ const de = {
   installLater: 'Nicht jetzt',
   fundingAlt: 'Logo Interreg, kofinanziert von der Europäischen Union',
   fundingText: 'Im Projekt OderTogether, kofinanziert von der Europäischen Union (Interreg).',
-  catchesTitle: 'Meine Fänge',
-  bySpecies: 'Nach Art',
-  bestLength: 'größter: {cm} cm',
   allTrips: 'Alle Angeltage',
   showMore: '{n} weitere anzeigen',
-  noCatchesYet: 'Noch keine Fänge eingetragen.',
 
   deleteTripQ: 'Diesen Angeltag mit allen Fängen löschen?',
 
@@ -245,7 +240,6 @@ const en: Record<StringKey, string> = {
   welcomeIntro: 'Your personal fishing log for rivers and lakes in Brandenburg and western Poland. Every entry helps fisheries research, including days without a catch.',
   getStarted: 'Get started',
   startHint: 'Sign-up with your email address, so your log is safe even if you change phones.',
-  haveAccount: 'I already have an account',
   demoMode: 'Demo mode: data stays on this device only.',
 
   signInTitle: 'Sign in with email',
@@ -383,12 +377,8 @@ const en: Record<StringKey, string> = {
   installLater: 'Not now',
   fundingAlt: 'Interreg logo, co-funded by the European Union',
   fundingText: 'Part of the OderTogether project, co-funded by the European Union (Interreg).',
-  catchesTitle: 'My catches',
-  bySpecies: 'By species',
-  bestLength: 'biggest: {cm} cm',
   allTrips: 'All fishing days',
   showMore: 'Show {n} more',
-  noCatchesYet: 'No catches logged yet.',
 
   deleteTripQ: 'Delete this fishing day and all its catches?',
 
@@ -483,7 +473,6 @@ const pl: Record<StringKey, string> = {
   welcomeIntro: 'Twój osobisty dziennik połowów dla rzek i jezior Brandenburgii i zachodniej Polski. Każdy wpis pomaga badaniom rybackim, także dni bez ryby.',
   getStarted: 'Zaczynamy',
   startHint: 'Rejestracja adresem e-mail, dzięki temu dziennik nie zginie przy zmianie telefonu.',
-  haveAccount: 'Mam już konto',
   demoMode: 'Tryb demo: dane zostają tylko na tym urządzeniu.',
 
   signInTitle: 'Zaloguj się e-mailem',
@@ -620,12 +609,8 @@ const pl: Record<StringKey, string> = {
   installLater: 'Nie teraz',
   fundingAlt: 'Logo Interreg, współfinansowane przez Unię Europejską',
   fundingText: 'W ramach projektu OdraRazem, współfinansowanego przez Unię Europejską (Interreg).',
-  catchesTitle: 'Moje połowy',
-  bySpecies: 'Według gatunku',
-  bestLength: 'największa: {cm} cm',
   allTrips: 'Wszystkie dni na rybach',
   showMore: 'Pokaż więcej ({n})',
-  noCatchesYet: 'Brak wpisanych połowów.',
 
   deleteTripQ: 'Usunąć ten dzień na rybach razem ze wszystkimi połowami?',
 
