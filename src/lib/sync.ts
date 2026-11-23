@@ -4,7 +4,6 @@
 import { db, getKV, setKV, surveyKey, wipeLocal, type Catch, type Profile, type SurveyResponse, type Trip } from './db';
 import { SURVEY } from '../data/survey';
 import { supabase } from './supabase';
-import { signInAnonymouslyOnce } from './anon';
 
 type Listener = (s: SyncState) => void;
 export type SyncState = { running: boolean; lastOk: number | null; lastError: string | null };
@@ -62,6 +61,7 @@ const profileToRow = (p: Profile, userId: string, lang: string) => ({
   has_fishing_exam: p.hasFishingExam,
   licenses: p.licenses,
   licenses_other: p.licensesOther || null,
+  contact_optins: p.contactOptIns ?? [],
   consent_version: p.consentVersion,
   consent_at: p.consentAt
 });
@@ -89,17 +89,10 @@ export async function pendingCount() {
 export async function syncNow(): Promise<void> {
   if (!supabase || state.running || !navigator.onLine) return;
   const { data: sess } = await supabase.auth.getSession();
-  let userId = sess.session?.user.id;
-  if (!userId) {
-    // First start happened offline: create the anonymous account now. Never do this if the
-    // device already belonged to an account (signed out), so data is not attached to a new one.
-    const owner = await getKV<string | null>('ownerId', null);
-    const prof = await getKV<Profile | null>('profile', null);
-    if (owner || !prof) return;
-    const id = await signInAnonymouslyOnce().catch(() => null);
-    if (!id) return;
-    userId = id;
-  }
+  // Anglers sign up with email before using the app, so there is always an account. Without a
+  // session (e.g. signed out) nothing is uploaded: data must never attach to a different account.
+  const userId = sess.session?.user.id;
+  if (!userId) return;
   emit({ running: true, lastError: null });
   try {
     const lang = await getKV<string>('lang', 'de');
@@ -142,6 +135,13 @@ export async function syncNow(): Promise<void> {
       if (error) throw error;
       const cur = await getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null);
       if (cur && cur.updatedAt === survey.updatedAt) await setKV(surveyKey(SURVEY.id), { ...cur, dirty: 0 });
+    }
+    // Once a day: tell the server the angler is still active (accounts unused for years are
+    // deleted automatically, see purge_inactive_accounts in supabase/schema.sql).
+    const today = new Date().toISOString().slice(0, 10);
+    if ((await getKV<string>('lastSeenPing', '')) !== today) {
+      const { error } = await supabase.rpc('touch_last_seen');
+      if (!error) await setKV('lastSeenPing', today);
     }
     emit({ running: false, lastOk: Date.now() });
   } catch (e) {
@@ -196,6 +196,7 @@ export async function pullAll(): Promise<void> {
         hasFishingExam: p.has_fishing_exam,
         licenses: p.licenses ?? [],
         licensesOther: p.licenses_other ?? '',
+        contactOptIns: p.contact_optins ?? [],
         consentVersion: p.consent_version,
         consentAt: p.consent_at,
         dirty: 0,

@@ -17,8 +17,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon.svg'],
       manifest: {
-        name: 'Fangbuch',
-        short_name: 'Fangbuch',
+        name: 'Captura · Fangbuch',
+        short_name: 'Captura',
         description: 'Dein persönliches Fangbuch für Brandenburg und Westpolen',
         lang: 'de',
         theme_color: '#0E4C5C',

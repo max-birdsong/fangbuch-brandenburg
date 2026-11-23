@@ -1,13 +1,11 @@
-// Accounts: anglers start without any login (anonymous Supabase user), so the first catch is
-// one tap away. They can later "secure" the log with an email address (needed for a new phone).
-// Signing in on another device uses a 6-digit code sent by email,
-// which works better inside an installed web app than a magic link.
+// Accounts: anglers sign up with their email address (link or code by email, no password) before
+// they start. The same step signs them in again on a new phone. Older test accounts may still be
+// anonymous; they can attach an email under Profile.
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { adoptSession, pullAll, syncNow } from './sync';
 import { wipeLocal } from './db';
-import { signInAnonymouslyOnce } from './anon';
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -24,17 +22,12 @@ export function useSession() {
   return { session, ready };
 }
 
-/** Creates an anonymous account if none exists yet. Fails quietly when offline (retried on sync). */
-export async function ensureAnonymous() {
-  await signInAnonymouslyOnce();
-}
-
 /** Where links in Supabase emails send the angler back to: this app. */
 const appUrl = () => `${location.origin}${location.pathname}`;
 
 export async function sendLoginCode(email: string) {
   if (!supabase) throw new Error('demo');
-  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: appUrl() } });
+  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: appUrl() } });
   if (error) throw error;
 }
 

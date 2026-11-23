@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { go, useLang } from '../app';
 import { Chips, Field, TopBar } from '../components/ui';
-import { CLUB_STATUS, COUNTRIES, LICENSES } from '../data/catalog';
+import { CLUB_STATUS, CONTACT_OPTINS, COUNTRIES, LICENSES } from '../data/catalog';
 import { CONSENT_VERSION, getProfile, saveProfile, type Profile } from '../lib/db';
-import { ensureAnonymous } from '../lib/auth';
 import { scheduleSync } from '../lib/sync';
 
 type Draft = Omit<Profile, 'dirty' | 'updatedAt' | 'consentVersion' | 'consentAt'>;
@@ -15,7 +14,8 @@ const EMPTY: Draft = {
   clubName: '',
   hasFishingExam: null,
   licenses: [],
-  licensesOther: ''
+  licensesOther: '',
+  contactOptIns: []
 };
 
 const postcodeOk = (country: Draft['homeCountry'], pc: string) => {
@@ -36,7 +36,8 @@ const licenseOrder = (country: Draft['homeCountry']) => {
 /** Onboarding (mode = 'onboarding') and later editing (mode = 'edit') share this form. */
 export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
   const { t, lang } = useLang();
-  const [d, setD] = useState<Draft>(EMPTY);
+  // Polish-language phones most likely belong to anglers living in Poland.
+  const [d, setD] = useState<Draft>(() => ({ ...EMPTY, homeCountry: lang === 'pl' ? 'PL' : 'DE' }));
   const [consent, setConsent] = useState(false);
   const [existing, setExisting] = useState<Profile | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
       if (p) {
         setExisting(p);
         const { dirty: _d, updatedAt: _u, consentVersion: _cv, consentAt: _ca, ...rest } = p;
-        setD(rest);
+        setD({ ...rest, contactOptIns: rest.contactOptIns ?? [] });
         setConsent(true);
       }
     });
@@ -56,6 +57,8 @@ export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
   const toggleLicense = (code: string) =>
     set('licenses', d.licenses.includes(code) ? d.licenses.filter((x) => x !== code) : [...d.licenses, code]);
+  const toggleOptIn = (code: string) =>
+    set('contactOptIns', d.contactOptIns.includes(code) ? d.contactOptIns.filter((x) => x !== code) : [...d.contactOptIns, code]);
   const isMember = d.clubStatus === 'active' || d.clubStatus === 'passive';
   const pcValid = postcodeOk(d.homeCountry, d.homePostcode);
 
@@ -74,14 +77,7 @@ export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
     });
     setBusy(false);
     go(mode === 'onboarding' ? '' : 'profile', true);
-    if (mode === 'onboarding') {
-      // In the background: never block or redirect the angler while the account is created.
-      ensureAnonymous()
-        .catch((e) => console.warn('Anonymous sign-in deferred', e)) // offline: retried by sync
-        .finally(() => scheduleSync(300));
-    } else {
-      scheduleSync(300);
-    }
+    scheduleSync(300);
   };
 
   return (
@@ -178,6 +174,17 @@ export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
               <input maxLength={200} value={d.licensesOther} onChange={(e) => set('licensesOther', e.target.value)} />
             </label>
           )}
+        </Field>
+
+        <Field label={t('qContact')} hint={t('contactHint')}>
+          <div className="stack-sm" role="group" aria-label={t('qContact')}>
+            {CONTACT_OPTINS.map((o) => (
+              <label key={o.code} className="check">
+                <input type="checkbox" checked={d.contactOptIns.includes(o.code)} onChange={() => toggleOptIn(o.code)} />
+                {o[lang]}
+              </label>
+            ))}
+          </div>
         </Field>
 
         {mode === 'onboarding' && (
