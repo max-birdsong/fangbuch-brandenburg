@@ -219,3 +219,173 @@ from public.survey_responses r
 cross join lateral jsonb_each(r.answers) a;
 
 revoke all on public.export_trips, public.export_catches, public.export_survey_long from anon, authenticated;
+
+-- =============================================================== Oder pilot (Nov 2026)
+-- Safe to run on an existing database: only adds columns, tables and functions.
+
+-- ---------------------------------------------------------------- contact opt-ins, last seen
+-- What the angler agreed to be emailed about (codes from CONTACT_OPTINS in src/data/catalog.ts).
+alter table public.profiles add column if not exists contact_optins text[] not null default '{}';
+-- Updated by the app about once a day; used to find inactive accounts for automatic deletion.
+alter table public.profiles add column if not exists last_seen_at timestamptz;
+
+create or replace function public.touch_last_seen() returns void
+language sql security definer set search_path = public as $$
+  update public.profiles set last_seen_at = now() where id = auth.uid();
+$$;
+revoke all on function public.touch_last_seen() from public, anon;
+grant execute on function public.touch_last_seen() to authenticated;
+
+-- ---------------------------------------------------------------- settings
+create table if not exists public.app_settings (
+  key   text primary key,
+  value text not null
+);
+alter table public.app_settings enable row level security;
+revoke all on public.app_settings from anon, authenticated;
+-- Years without activity after which an account is deleted automatically. Placeholder (3) until
+-- the data protection officer decides; keep RETENTION_YEARS in src/config.ts the same (privacy text).
+insert into public.app_settings (key, value) values ('retention_years', '3') on conflict (key) do nothing;
+
+-- ---------------------------------------------------------------- anonymous archive
+-- When an account is deleted for inactivity, its fishing data is kept here without any link to
+-- the person: a new random archive_id instead of the account id, and no email, postcode or club
+-- name. (When anglers delete their account themselves, everything is deleted, nothing archived.)
+create table if not exists public.archive_profiles (
+  archive_id       uuid primary key,
+  archived_at      timestamptz not null default now(),
+  lang             text,
+  years_fishing    smallint,
+  home_country     text,
+  club_status      text,
+  has_fishing_exam boolean,
+  licenses         text[]
+);
+create table if not exists public.archive_trips (
+  id uuid primary key, archive_id uuid not null, water_id text, water_name text not null, water_choice text,
+  logged_live boolean, started_at timestamptz not null, ended_at timestamptz, method text, platform text,
+  targets text[], satisfaction smallint
+);
+create table if not exists public.archive_catches (
+  id uuid primary key, trip_id uuid not null, archive_id uuid not null, species text not null,
+  count smallint not null, length_cm numeric(5, 1), kept boolean not null
+);
+create table if not exists public.archive_survey_responses (
+  id uuid primary key, archive_id uuid not null, survey_id text not null, survey_version integer not null,
+  answers jsonb not null, started_at timestamptz, completed_at timestamptz
+);
+alter table public.archive_profiles enable row level security;
+alter table public.archive_trips enable row level security;
+alter table public.archive_catches enable row level security;
+alter table public.archive_survey_responses enable row level security;
+revoke all on public.archive_profiles, public.archive_trips, public.archive_catches, public.archive_survey_responses from anon, authenticated;
+drop policy if exists "admins read archive profiles" on public.archive_profiles;
+create policy "admins read archive profiles" on public.archive_profiles for select to authenticated using (public.is_admin());
+drop policy if exists "admins read archive trips" on public.archive_trips;
+create policy "admins read archive trips" on public.archive_trips for select to authenticated using (public.is_admin());
+drop policy if exists "admins read archive catches" on public.archive_catches;
+create policy "admins read archive catches" on public.archive_catches for select to authenticated using (public.is_admin());
+drop policy if exists "admins read archive survey" on public.archive_survey_responses;
+create policy "admins read archive survey" on public.archive_survey_responses for select to authenticated using (public.is_admin());
+grant select on public.archive_profiles, public.archive_trips, public.archive_catches, public.archive_survey_responses to authenticated;
+
+-- Copies an account's fishing data into the archive (anonymously) and deletes the account.
+create or replace function public.anonymise_account(uid uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare aid uuid := gen_random_uuid();
+begin
+  insert into public.archive_profiles (archive_id, lang, years_fishing, home_country, club_status, has_fishing_exam, licenses)
+    select aid, lang, years_fishing, home_country, club_status, has_fishing_exam, licenses from public.profiles where id = uid;
+  insert into public.archive_trips
+    select id, aid, water_id, water_name, water_choice, logged_live, started_at, ended_at, method, platform, targets, satisfaction
+    from public.trips where user_id = uid and not deleted;
+  insert into public.archive_catches
+    select c.id, c.trip_id, aid, c.species, c.count, c.length_cm, c.kept
+    from public.catches c join public.trips t on t.id = c.trip_id
+    where c.user_id = uid and not c.deleted and not t.deleted;
+  insert into public.archive_survey_responses
+    select id, aid, survey_id, survey_version, answers, started_at, completed_at from public.survey_responses where user_id = uid;
+  delete from auth.users where id = uid;   -- cascades to profile, trips, catches, survey
+end $$;
+revoke all on function public.anonymise_account(uuid) from public, anon, authenticated;
+
+-- Deletes (anonymises) every account inactive for longer than retention_years. Admin accounts are
+-- skipped. Returns the number of accounts processed. Runs daily via pg_cron (below).
+create or replace function public.purge_inactive_accounts() returns integer
+language plpgsql security definer set search_path = public as $$
+declare
+  years int := coalesce((select value::int from public.app_settings where key = 'retention_years'), 3);
+  n int := 0;
+  u record;
+begin
+  for u in
+    select au.id from auth.users au
+    left join public.profiles p on p.id = au.id
+    where au.id not in (select user_id from public.admins)
+      and greatest(
+            au.created_at,
+            au.last_sign_in_at,
+            p.last_seen_at,
+            p.updated_at,
+            (select max(t.updated_at) from public.trips t where t.user_id = au.id)
+          ) < now() - make_interval(years => years)
+  loop
+    perform public.anonymise_account(u.id);
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+revoke all on function public.purge_inactive_accounts() from public, anon, authenticated;
+
+-- Daily at 03:30 server time. Needs the pg_cron extension (Supabase: Database > Extensions >
+-- pg_cron; included in self-hosted Supabase). Without it, run the function by hand now and then.
+do $$
+begin
+  if exists (select 1 from pg_extension where extname = 'pg_cron') then
+    perform cron.schedule('purge-inactive-accounts', '30 3 * * *', 'select public.purge_inactive_accounts()');
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------- contact list for admins
+-- Email addresses of anglers who opted in, for sending study results or invitations.
+create or replace function public.admin_contact_list()
+returns table (email text, lang text, contact_optins text[])
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'not allowed'; end if;
+  return query
+    select au.email::text, p.lang, p.contact_optins
+    from public.profiles p join auth.users au on au.id = p.id
+    where cardinality(p.contact_optins) > 0 and au.email is not null
+    order by au.email;
+end $$;
+revoke all on function public.admin_contact_list() from public, anon;
+grant execute on function public.admin_contact_list() to authenticated;
+
+-- ---------------------------------------------------------------- exports including the archive
+create or replace view public.export_trips_all with (security_invoker = true) as
+select 'active' as source, trip_id, user_id as person_id, water_id, water_name, water_choice, logged_live,
+       started_at, ended_at, hours_fished, method, platform, targets, satisfaction, n_fish, n_kept,
+       years_fishing, home_country, club_status, has_fishing_exam, licenses
+from public.export_trips
+union all
+select 'archived', t.id, t.archive_id, t.water_id, t.water_name, t.water_choice, t.logged_live,
+       t.started_at, t.ended_at, round(extract(epoch from (t.ended_at - t.started_at)) / 3600.0, 2),
+       t.method, t.platform, t.targets, t.satisfaction,
+       coalesce(c.n_fish, 0), coalesce(c.n_kept, 0),
+       p.years_fishing, p.home_country, p.club_status, p.has_fishing_exam, p.licenses
+from public.archive_trips t
+left join (select trip_id, sum(count) as n_fish, sum(case when kept then count else 0 end) as n_kept
+           from public.archive_catches group by trip_id) c on c.trip_id = t.id
+left join public.archive_profiles p on p.archive_id = t.archive_id;
+
+create or replace view public.export_catches_all with (security_invoker = true) as
+select 'active' as source, catch_id, trip_id, user_id as person_id, species, count, length_cm, kept,
+       water_id, water_name, trip_started_at, method, platform
+from public.export_catches
+union all
+select 'archived', c.id, c.trip_id, c.archive_id, c.species, c.count, c.length_cm, c.kept,
+       t.water_id, t.water_name, t.started_at, t.method, t.platform
+from public.archive_catches c join public.archive_trips t on t.id = c.trip_id;
+
+revoke all on public.export_trips_all, public.export_catches_all from anon, authenticated;
