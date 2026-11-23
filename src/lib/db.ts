@@ -3,6 +3,7 @@
 import Dexie, { type Table } from 'dexie';
 import type { Lang } from '../data/catalog';
 import { uuid } from './util';
+import { DB_NAME } from './demo';
 
 export type WaterChoice = 'gps' | 'recent' | 'search' | 'manual' | 'other';
 
@@ -64,7 +65,7 @@ class FangbuchDB extends Dexie {
   catches!: Table<Catch, string>;
   kv!: Table<KV, string>;
   constructor() {
-    super('fangbuch');
+    super(DB_NAME);
     this.version(1).stores({
       trips: 'id, startedAt, dirty',
       catches: 'id, tripId, dirty',

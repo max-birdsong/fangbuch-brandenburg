@@ -335,3 +335,8 @@ input.fish-len { width: 120px; }
 .funding-text { margin: 0; font-size: 12px; color: var(--muted); }
 .funding.on-dark { align-items: center; text-align: center; margin-top: 18px; }
 .funding.on-dark .funding-text { color: rgba(255,255,255,.75); }
+
+/* "Try without an account" demo */
+.try-link { background: none; border: 0; font: inherit; font-weight: 600; min-height: 44px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.demo-bar { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: calc(6px + env(safe-area-inset-top)) 16px 6px; background: #E9A23B; color: #1B1405; font-size: 14px; font-weight: 600; }
+.demo-bar button { flex: none; min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px solid #1B1405; background: transparent; color: #1B1405; font: inherit; cursor: pointer; }
