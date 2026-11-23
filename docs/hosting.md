@@ -12,7 +12,7 @@ screen.
 | Virtual server, 4 GB RAM, 2 CPUs, ~80 GB disk, location Germany | Hetzner Cloud (Nuremberg/Falkenstein) | about €5 to €10 per month |
 | Server backups (daily snapshots) | Hetzner "Backups" option | +20% of server price |
 | Off-site copy of the nightly database dump | Hetzner Storage Box, or IfB's own storage | about €4 per month, or free on IfB storage |
-| Web address | subdomain of the IfB site, e.g. `captura.ifb-potsdam.de` | free (Hendrik adds one DNS record) |
+| Web address (**open question**) | own domain (e.g. `captura-oder.de` or `.eu`, check availability), a subdomain of the IfB site, or of a project website | own domain about €10 to €20 per year; subdomains free |
 | Email sending (sign-in links, results) | IfB mail server, or Brevo free plan (300 emails/day) | free |
 
 Sign the provider's data processing agreement (Hetzner offers one online) and add it to IfB's
@@ -51,7 +51,7 @@ real mail sender (SMTP) before the first anglers are invited.
 
 | When | What | Who |
 |---|---|---|
-| December | Pick the name; request the subdomain; order the server; ask Julia for the Interreg logo files | Team, Hendrik, Julia |
+| December | Pick the name and the web address (own domain, IfB or project site); order the server; ask Julia for the Interreg logo files | Team, Hendrik, Julia |
 | December | Privacy text and retention period to the data protection officer (Erik) | Max |
 | January | Server set up (steps 1 to 7), mail sender working, app running at the new address | Max or contractor, Hendrik |
 | January | Polish texts checked by a native speaker (Ania); species list and size limits checked by a fish biologist | Ania, Thilo |
