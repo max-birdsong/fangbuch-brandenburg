@@ -312,3 +312,6 @@ input.fish-len { width: 120px; }
 
 /* Restored draft of a new fishing day */
 .draft-note { background: #FFF4E5; border: 1px solid #F0C78A; border-radius: 12px; padding: 8px 14px; font-size: 15px; font-weight: 600; align-items: center; }
+
+/* Soft warning (e.g. unusually large fish): the angler can confirm by tapping again */
+.warn { color: #8A5300; background: #FFF4E5; border: 1px solid #F0C78A; border-radius: 10px; padding: 8px 12px; font-weight: 600; font-size: 15px; margin: 0; }

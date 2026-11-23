@@ -103,3 +103,15 @@ export const CONTACT_OPTINS: Labelled[] = [
   { code: 'results', de: 'Ergebnisse der Studie', en: 'Results of the study', pl: 'Wyniki badania' },
   { code: 'studies', de: 'Einladungen zu weiteren Studien des IfB', en: 'Invitations to further IfB studies', pl: 'Zaproszenia do kolejnych badań IfB' }
 ];
+
+/**
+ * Largest plausible total length per species (cm), roughly the largest fish recorded in central
+ * Europe. Above this the app asks the angler to confirm; above 1.5x it refuses (likely a typo,
+ * e.g. mm instead of cm). IFB TODO: have a fish biologist check these values.
+ */
+export const SPECIES_MAX_CM: Record<string, number> = {
+  zander: 110, pike: 140, perch: 60, asp: 110, wels: 280, eel: 150, bream: 85, roach: 50, carp: 120,
+  tench: 70, ide: 85, burbot: 100, chub: 80, rudd: 50, silver_bream: 45, crucian: 55, gibel: 50,
+  bleak: 25, dace: 40, vimba: 50, barbel: 100, nase: 60, ruffe: 30, brown_trout: 100, sea_trout: 120,
+  rainbow_trout: 100, grass_carp: 140, sturgeon: 300, round_goby: 30
+};
