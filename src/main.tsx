@@ -11,7 +11,7 @@ import { useSession } from './lib/auth';
 import { useProfile } from './lib/hooks';
 import { adoptSession, startAutoSync } from './lib/sync';
 import { loadWaters } from './lib/waters';
-import { supabase } from './lib/supabase';
+import { isDemo, supabase } from './lib/supabase';
 import { Welcome } from './screens/Welcome';
 import { SignIn } from './screens/SignIn';
 import { ProfileForm } from './screens/ProfileForm';
@@ -27,18 +27,23 @@ import { TripForm } from './screens/TripForm';
 function Router() {
   const r = useRoute();
   const profile = useProfile();
-  const { session } = useSession();
+  const { session, ready } = useSession();
 
   useEffect(() => {
     if (session?.user.id) void adoptSession(session.user.id);
   }, [session?.user.id]);
 
-  if (profile === undefined) return null; // loading local DB (a few ms)
+  if (profile === undefined || !ready) return null; // loading local DB and session (a few ms)
 
   // Pages reachable without a profile.
   if (r[0] === 'privacy') return <Privacy />;
   if (r[0] === 'signin') return <SignIn />;
-  if (!profile) return r[0] === 'onboarding' ? <ProfileForm mode="onboarding" /> : <Welcome />;
+  // No profile yet: sign up with email first, then the one-time profile. (The demo build has no
+  // server, so it goes straight to the profile.)
+  if (!profile) {
+    if (session || (isDemo && r[0] === 'onboarding')) return <ProfileForm mode="onboarding" />;
+    return <Welcome />;
+  }
 
   switch (r[0]) {
     case 'new':

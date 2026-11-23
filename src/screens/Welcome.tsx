@@ -24,10 +24,8 @@ export function Welcome() {
         <path d="M190 58 q 26 -16 52 0 q -26 16 -52 0 z M242 58 l 14 -9 v 18 z" fill="#FFFFFF" />
       </svg>
       <div className="stack">
-        <button className="btn accent big" onClick={() => go('onboarding')}>{t('getStarted')}</button>
-        {!isDemo && (
-          <button className="btn ghost-light" onClick={() => go('signin')}>{t('haveAccount')}</button>
-        )}
+        <button className="btn accent big" onClick={() => go(isDemo ? 'onboarding' : 'signin')}>{t('getStarted')}</button>
+        {!isDemo && <p className="demo-note">{t('startHint')}</p>}
         {isDemo && <p className="demo-note">{t('demoMode')}</p>}
         <a className="link-light" href="#/privacy">{t('privacy')}</a>
       </div>
