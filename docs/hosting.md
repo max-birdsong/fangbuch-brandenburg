@@ -12,7 +12,7 @@ screen.
 | Virtual server, 4 GB RAM, 2 CPUs, ~80 GB disk, location Germany | Hetzner Cloud (Nuremberg/Falkenstein) | about €5 to €10 per month |
 | Server backups (daily snapshots) | Hetzner "Backups" option | +20% of server price |
 | Off-site copy of the nightly database dump | Hetzner Storage Box, or IfB's own storage | about €4 per month, or free on IfB storage |
-| Web address | subdomain of the IfB site, e.g. `<name>.ifb-potsdam.de` | free (Hendrik adds one DNS record) |
+| Web address | subdomain of the IfB site, e.g. `captura.ifb-potsdam.de` | free (Hendrik adds one DNS record) |
 | Email sending (sign-in links, results) | IfB mail server, or Brevo free plan (300 emails/day) | free |
 
 Sign the provider's data processing agreement (Hetzner offers one online) and add it to IfB's

@@ -1,8 +1,8 @@
-# Fangbuch (working title)
+# Captura (working name)
 
-A catch log app (Fangbuch / Dziennik połowów) for recreational anglers in Brandenburg and western Poland, built for the Institut für Binnenfischerei e.V. (IfB) Potsdam-Sacrow. Anglers get a personal logbook (fishing days, catches, own stats); IfB gets effort and catch data for research, including days without a catch.
+Captura (Latin for "catch") is a catch log app (Fangbuch / Dziennik połowów) for recreational anglers in Brandenburg and western Poland, built for the Institut für Binnenfischerei e.V. (IfB) Potsdam-Sacrow. Anglers get a personal logbook (fishing days, catches, own stats); IfB gets effort and catch data for research, including days without a catch.
 
-The app has no brand name yet: it shows "Fangbuch", "Catch log" or "Dziennik połowów" depending on the language, as a placeholder. The repository and web address still say `fangbuch-brandenburg`; renaming the repository would change the app's address for everyone who installed it.
+"Captura" is a working name, shown with "Fangbuch", "Catch log" or "Dziennik połowów" underneath depending on the language. The repository and web address still say `fangbuch-brandenburg`; renaming the repository would change the app's address for everyone who installed it.
 
 Status: **proof of concept / pilot**. Licensed to IfB, all rights reserved.
 
