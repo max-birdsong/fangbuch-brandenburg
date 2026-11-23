@@ -6,6 +6,7 @@ import { loadAdminData, type AdminData } from '../lib/admin';
 import { exampleData } from '../lib/demoData';
 import { byWater, bySpecies, hoursOf, kpis, surveyMotives, surveyScales, surveyWide, weekly } from '../lib/stats';
 import { downloadText, toCSV } from '../lib/util';
+import { supabase } from '../lib/supabase';
 
 /** Research dashboard. Admins see all anglers; everyone else only this device's data. */
 export function Admin() {
@@ -71,6 +72,14 @@ export function Admin() {
   };
   const exportCatches = () => downloadText('fangbuch-faenge.csv', toCSV(data.catches.map((c) => ({ trip_id: c.tripId, species: c.species, count: c.count, length_cm: c.lengthCm, kept: c.kept ? 1 : 0 }))));
   const exportSurvey = () => downloadText('fangbuch-umfrage.csv', toCSV(surveyWide(data)));
+  // Email addresses of anglers who agreed to be contacted (admins only, checked on the server).
+  const exportContacts = async () => {
+    const { data: rows, error } = (await supabase?.rpc('admin_contact_list')) ?? { data: null, error: new Error('demo') };
+    if (error || !rows) return setErr(L('Kontaktliste konnte nicht geladen werden.', 'Could not load the contact list.'));
+    downloadText('kontakte-optin.csv', toCSV((rows as { email: string; lang: string; contact_optins: string[] }[]).map((r) => ({
+      email: r.email, sprache: r.lang, ergebnisse: r.contact_optins.includes('results') ? 1 : 0, studien: r.contact_optins.includes('studies') ? 1 : 0
+    }))));
+  };
 
   return (
     <main className="screen">
@@ -179,6 +188,7 @@ export function Admin() {
             <button className="btn secondary small" onClick={exportTrips}>{L('Angeltage', 'Fishing days')}</button>
             <button className="btn secondary small" onClick={exportCatches}>{L('Fänge', 'Catches')}</button>
             <button className="btn secondary small" onClick={exportSurvey}>{L('Umfrage', 'Survey')}</button>
+            {data.source === 'all' && <button className="btn secondary small" onClick={() => void exportContacts()}>{L('Kontaktliste (Opt-ins)', 'Contact list (opt-ins)')}</button>}
           </div>
         </section>}
       </div>

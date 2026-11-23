@@ -136,6 +136,13 @@ export async function syncNow(): Promise<void> {
       const cur = await getKV<SurveyResponse | null>(surveyKey(SURVEY.id), null);
       if (cur && cur.updatedAt === survey.updatedAt) await setKV(surveyKey(SURVEY.id), { ...cur, dirty: 0 });
     }
+    // Once a day: tell the server the angler is still active (accounts unused for years are
+    // deleted automatically, see purge_inactive_accounts in supabase/schema.sql).
+    const today = new Date().toISOString().slice(0, 10);
+    if ((await getKV<string>('lastSeenPing', '')) !== today) {
+      const { error } = await supabase.rpc('touch_last_seen');
+      if (!error) await setKV('lastSeenPing', today);
+    }
     emit({ running: false, lastOk: Date.now() });
   } catch (e) {
     console.warn('Sync failed', e);
