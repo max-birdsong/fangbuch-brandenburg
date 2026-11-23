@@ -6,11 +6,12 @@ const de = {
   welcomeTitle2: '',
   welcomeIntro: 'Dein persönliches Fangbuch für Flüsse und Seen in Brandenburg und Westpolen. Jeder Eintrag hilft der Fischereiforschung, auch Tage ohne Fang.',
   getStarted: 'Loslegen',
+  startHint: 'Anmeldung mit E-Mail-Adresse. So geht dein Fangbuch auch auf einem neuen Handy nicht verloren.',
   haveAccount: 'Ich habe schon ein Konto',
   demoMode: 'Demo-Modus: Daten bleiben nur auf diesem Gerät.',
 
-  signInTitle: 'Anmelden',
-  signInIntro: 'Gib die E-Mail-Adresse ein, mit der du dein Konto gesichert hast. Wir schicken dir eine E-Mail.',
+  signInTitle: 'Mit E-Mail anmelden',
+  signInIntro: 'Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link zum Anmelden, kein Passwort nötig. Neu hier? Damit legst du auch dein Konto an.',
   email: 'E-Mail-Adresse',
   sendCode: 'E-Mail senden',
   codeSent: 'Wir haben dir eine E-Mail an {email} geschickt. Tippe auf den Link darin und komm dann hierher zurück.',
@@ -48,6 +49,8 @@ const de = {
   consent: 'Ich stimme zu, dass meine Angaben und Fangeinträge vom Institut für Binnenfischerei für die Fischereiforschung gespeichert und ausgewertet werden.',
   privacy: 'Datenschutz',
   onbNext: 'Weiter zum Fangbuch',
+  qContact: 'Möchtest du per E-Mail informiert werden über …',
+  contactHint: 'Freiwillig, jederzeit im Profil änderbar. Wir schreiben nur dazu, nichts anderes.',
   required: 'Bitte stimme der Datenverarbeitung zu.',
 
   myLog: 'Mein Fangbuch',
@@ -187,10 +190,11 @@ const de = {
   privacyDraft: 'Entwurf, noch mit dem Datenschutzbeauftragten abzustimmen.',
   privacyBody: [
     'Verantwortlich: Institut für Binnenfischerei e.V. Potsdam-Sacrow, Im Königswald 2, 14469 Potsdam.',
-    'Was wir speichern: deine Angaben aus dem Profil (Angeljahre, Postleitzahl, Verein, Angelkarten), deine Angeltage (Gewässer, Zeit, Methode, Zufriedenheit), Fänge (Art, Anzahl, Länge, entnommen oder zurückgesetzt) und, falls du teilnimmst, deine Antworten in der freiwilligen Umfrage (z. B. Geburtsjahr, Motive fürs Angeln). Wenn du dein Konto sicherst, auch deine E-Mail-Adresse.',
+    'Was wir speichern: deine Angaben aus dem Profil (Angeljahre, Postleitzahl, Verein, Angelkarten), deine Angeltage (Gewässer, Zeit, Methode, Zufriedenheit), Fänge (Art, Anzahl, Länge, entnommen oder zurückgesetzt) und, falls du teilnimmst, deine Antworten in der freiwilligen Umfrage (z. B. Geburtsjahr, Motive fürs Angeln). Außerdem deine E-Mail-Adresse: für die Anmeldung und, nur wenn du zustimmst, für Informationen zur Studie.',
     'Was wir nicht speichern: deinen genauen Standort. Die Ortung findet nur auf deinem Gerät statt, um das nächste Gewässer vorzuschlagen.',
-    'Zweck: wissenschaftliche Auswertung zur Angelfischerei und zu Fischbeständen in Brandenburg. Ergebnisse werden nur zusammengefasst veröffentlicht, nie mit Namen oder E-Mail.',
-    'Deine Rechte: Du kannst deine Daten jederzeit in der App herunterladen und dein Konto mit allen Daten löschen. Externer Datenschutzbeauftragter: dabag technology GmbH, datenschutz@dabag.de.'
+    'Zweck: wissenschaftliche Auswertung zur Angelfischerei und zu Fischbeständen in Brandenburg und an der Oder. Ergebnisse werden nur zusammengefasst veröffentlicht, nie mit Namen oder E-Mail.',
+    'Speicherdauer: Wenn du die App {years} Jahre lang nicht nutzt, löschen wir dein Konto automatisch, mit E-Mail-Adresse, Postleitzahl und Vereinsnamen. Deine Angeltage und Fänge bleiben danach nur anonym für die Forschung erhalten, ohne jeden Bezug zu dir.',
+    'Deine Rechte: Du kannst deine Daten jederzeit in der App herunterladen und dein Konto mit allen Daten löschen. Dann löschen wir alles, auch die Angeltage und Fänge. Externer Datenschutzbeauftragter: dabag technology GmbH, datenschutz@dabag.de.'
   ].join('\n\n')
 };
 
@@ -202,11 +206,12 @@ const en: Record<StringKey, string> = {
   welcomeTitle2: '',
   welcomeIntro: 'Your personal fishing log for rivers and lakes in Brandenburg and western Poland. Every entry helps fisheries research, including days without a catch.',
   getStarted: 'Get started',
+  startHint: 'Sign-up with your email address, so your log is safe even if you change phones.',
   haveAccount: 'I already have an account',
   demoMode: 'Demo mode: data stays on this device only.',
 
-  signInTitle: 'Sign in',
-  signInIntro: 'Enter the email address you used to secure your log. We’ll send you an email.',
+  signInTitle: 'Sign in with email',
+  signInIntro: 'Enter your email address. We will send you a sign-in link, no password needed. New here? This also creates your account.',
   email: 'Email address',
   sendCode: 'Send email',
   codeSent: 'We sent an email to {email}. Tap the link in it, then come back here.',
@@ -244,6 +249,8 @@ const en: Record<StringKey, string> = {
   consent: 'I agree that my information and catch entries are stored and analysed by the Institute of Inland Fisheries for fisheries research.',
   privacy: 'Privacy',
   onbNext: 'Continue to my log',
+  qContact: 'Would you like to receive emails about …',
+  contactHint: 'Optional, can be changed any time in your profile. We only write about these topics.',
   required: 'Please agree to the data processing.',
 
   myLog: 'My catch log',
@@ -383,10 +390,11 @@ const en: Record<StringKey, string> = {
   privacyDraft: 'Draft, still to be agreed with the data protection officer.',
   privacyBody: [
     'Controller: Institut für Binnenfischerei e.V. Potsdam-Sacrow, Im Königswald 2, 14469 Potsdam, Germany.',
-    'What we store: your profile details (years fishing, postcode, club, licenses), your fishing days (water, time, method, satisfaction), catches (species, number, length, kept or released) and, if you take part, your answers to the optional survey (e.g. birth year, reasons for fishing). If you secure your account, also your email address.',
+    'What we store: your profile details (years fishing, postcode, club, licenses), your fishing days (water, time, method, satisfaction), catches (species, number, length, kept or released) and, if you take part, your answers to the optional survey (e.g. birth year, reasons for fishing). Also your email address: for signing in and, only if you agree, for information about the study.',
     'What we do not store: your exact location. Location is only used on your device to suggest the nearest water.',
-    'Purpose: scientific analysis of recreational fishing and fish stocks in Brandenburg. Results are only published in aggregate, never with names or emails.',
-    'Your rights: you can download your data in the app at any time and delete your account with all data. External data protection officer: dabag technology GmbH, datenschutz@dabag.de.'
+    'Purpose: scientific analysis of recreational fishing and fish stocks in Brandenburg and on the Oder. Results are only published in aggregate, never with names or emails.',
+    'Storage period: if you do not use the app for {years} years, we delete your account automatically, including your email address, postcode and club name. Your fishing days and catches are then kept only in anonymous form for research, with no link to you.',
+    'Your rights: you can download your data in the app at any time and delete your account with all data. Then we delete everything, including your fishing days and catches. External data protection officer: dabag technology GmbH, datenschutz@dabag.de.'
   ].join('\n\n')
 };
 
@@ -398,11 +406,12 @@ const pl: Record<StringKey, string> = {
   welcomeTitle2: '',
   welcomeIntro: 'Twój osobisty dziennik połowów dla rzek i jezior Brandenburgii i zachodniej Polski. Każdy wpis pomaga badaniom rybackim, także dni bez ryby.',
   getStarted: 'Zaczynamy',
+  startHint: 'Rejestracja adresem e-mail, dzięki temu dziennik nie zginie przy zmianie telefonu.',
   haveAccount: 'Mam już konto',
   demoMode: 'Tryb demo: dane zostają tylko na tym urządzeniu.',
 
-  signInTitle: 'Logowanie',
-  signInIntro: 'Podaj adres e-mail, którym zabezpieczyłeś(-aś) konto. Wyślemy Ci wiadomość e-mail.',
+  signInTitle: 'Zaloguj się e-mailem',
+  signInIntro: 'Podaj swój adres e-mail. Wyślemy Ci link do logowania, bez hasła. Jesteś tu pierwszy raz? W ten sposób założysz też konto.',
   email: 'Adres e-mail',
   sendCode: 'Wyślij e-mail',
   codeSent: 'Wysłaliśmy wiadomość na adres {email}. Kliknij link w wiadomości i wróć tutaj.',
@@ -440,6 +449,8 @@ const pl: Record<StringKey, string> = {
   consent: 'Wyrażam zgodę na przechowywanie i analizowanie moich danych i wpisów o połowach przez Institut für Binnenfischerei do celów badań rybackich.',
   privacy: 'Ochrona danych',
   onbNext: 'Dalej do dziennika',
+  qContact: 'Czy chcesz otrzymywać e-mailem informacje o …',
+  contactHint: 'Dobrowolne, można zmienić w każdej chwili w profilu. Piszemy tylko w tych sprawach.',
   required: 'Wyraź zgodę na przetwarzanie danych.',
 
   myLog: 'Mój dziennik',
@@ -578,10 +589,11 @@ const pl: Record<StringKey, string> = {
   privacyDraft: 'Wersja robocza, do uzgodnienia z inspektorem ochrony danych.',
   privacyBody: [
     'Administrator danych: Institut für Binnenfischerei e.V. Potsdam-Sacrow, Im Königswald 2, 14469 Poczdam, Niemcy.',
-    'Co zapisujemy: dane z Twojego profilu (lata wędkowania, kod pocztowy, koło lub klub, zezwolenia), Twoje dni na rybach (łowisko, czas, metoda, zadowolenie), połowy (gatunek, liczba, długość, zabrana czy wypuszczona) oraz, jeśli weźmiesz udział, Twoje odpowiedzi w dobrowolnej ankiecie (np. rok urodzenia, powody wędkowania). Jeśli zabezpieczysz konto, także Twój adres e-mail.',
+    'Co zapisujemy: dane z Twojego profilu (lata wędkowania, kod pocztowy, koło lub klub, zezwolenia), Twoje dni na rybach (łowisko, czas, metoda, zadowolenie), połowy (gatunek, liczba, długość, zabrana czy wypuszczona) oraz, jeśli weźmiesz udział, Twoje odpowiedzi w dobrowolnej ankiecie (np. rok urodzenia, powody wędkowania). Ponadto Twój adres e-mail: do logowania i, tylko jeśli wyrazisz zgodę, do informacji o badaniu.',
     'Czego nie zapisujemy: Twojej dokładnej lokalizacji. Lokalizacja jest ustalana tylko na Twoim urządzeniu, by zaproponować najbliższe łowisko.',
     'Cel: naukowa analiza wędkarstwa i rybostanu w regionie Odry. Wyniki publikujemy wyłącznie w formie zbiorczej, nigdy z imieniem i nazwiskiem ani adresem e-mail.',
-    'Twoje prawa: w każdej chwili możesz pobrać swoje dane w aplikacji i usunąć konto ze wszystkimi danymi. Zewnętrzny inspektor ochrony danych: dabag technology GmbH, datenschutz@dabag.de.'
+    'Okres przechowywania: jeśli przez {years} lata nie korzystasz z aplikacji, automatycznie usuwamy Twoje konto wraz z adresem e-mail, kodem pocztowym i nazwą koła. Twoje dni na rybach i połowy pozostają potem wyłącznie w formie anonimowej do celów badawczych, bez żadnego powiązania z Tobą.',
+    'Twoje prawa: w każdej chwili możesz pobrać swoje dane w aplikacji i usunąć konto ze wszystkimi danymi. Wtedy usuwamy wszystko, także dni na rybach i połowy. Zewnętrzny inspektor ochrony danych: dabag technology GmbH, datenschutz@dabag.de.'
   ].join('\n\n')
 };
 

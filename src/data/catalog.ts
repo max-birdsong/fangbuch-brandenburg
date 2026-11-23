@@ -97,3 +97,9 @@ export const COUNTRIES: Labelled[] = [
 
 export const label = (list: Labelled[], code: string | null | undefined, lang: Lang) =>
   list.find((x) => x.code === code)?.[lang] ?? code ?? '';
+
+// What anglers can choose to be emailed about (stored as codes on the profile, all optional).
+export const CONTACT_OPTINS: Labelled[] = [
+  { code: 'results', de: 'Ergebnisse der Studie', en: 'Results of the study', pl: 'Wyniki badania' },
+  { code: 'studies', de: 'Einladungen zu weiteren Studien des IfB', en: 'Invitations to further IfB studies', pl: 'Zaproszenia do kolejnych badań IfB' }
+];

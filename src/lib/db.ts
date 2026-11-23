@@ -47,6 +47,7 @@ export interface Profile {
   hasFishingExam: boolean | null;
   licenses: string[];
   licensesOther: string;
+  contactOptIns: string[]; // codes from CONTACT_OPTINS: what the angler wants to be emailed about
   consentVersion: string;
   consentAt: string;
   dirty: 0 | 1;
@@ -74,7 +75,7 @@ class FangbuchDB extends Dexie {
 
 export const db = new FangbuchDB();
 
-export const CONSENT_VERSION = '2026-10-pilot';
+export const CONSENT_VERSION = '2026-11-pilot-email';
 
 export async function getKV<T>(key: string, fallback: T): Promise<T> {
   const row = await db.kv.get(key);
