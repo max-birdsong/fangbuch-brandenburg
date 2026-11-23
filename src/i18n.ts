@@ -8,6 +8,9 @@ const de = {
   getStarted: 'Loslegen',
   startHint: 'Anmeldung mit E-Mail-Adresse. So geht dein Fangbuch auch auf einem neuen Handy nicht verloren.',
   demoMode: 'Demo-Modus: Daten bleiben nur auf diesem Gerät.',
+  tryDemo: 'Erst mal ohne Anmeldung ansehen',
+  demoBar: 'Demo mit Beispieldaten. Nichts wird gespeichert.',
+  demoExit: 'Beenden',
 
   signInTitle: 'Mit E-Mail anmelden',
   signInIntro: 'Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link zum Anmelden, kein Passwort nötig. Neu hier? Damit legst du auch dein Konto an.',
@@ -241,6 +244,9 @@ const en: Record<StringKey, string> = {
   getStarted: 'Get started',
   startHint: 'Sign-up with your email address, so your log is safe even if you change phones.',
   demoMode: 'Demo mode: data stays on this device only.',
+  tryDemo: 'Look around without signing up',
+  demoBar: 'Demo with example data. Nothing is saved.',
+  demoExit: 'Exit',
 
   signInTitle: 'Sign in with email',
   signInIntro: 'Enter your email address. We will send you a sign-in link, no password needed. New here? This also creates your account.',
@@ -474,6 +480,9 @@ const pl: Record<StringKey, string> = {
   getStarted: 'Zaczynamy',
   startHint: 'Rejestracja adresem e-mail, dzięki temu dziennik nie zginie przy zmianie telefonu.',
   demoMode: 'Tryb demo: dane zostają tylko na tym urządzeniu.',
+  tryDemo: 'Najpierw zobacz bez rejestracji',
+  demoBar: 'Demo z przykładowymi danymi. Nic nie jest zapisywane.',
+  demoExit: 'Zakończ',
 
   signInTitle: 'Zaloguj się e-mailem',
   signInIntro: 'Podaj swój adres e-mail. Wyślemy Ci link do logowania, bez hasła. Jesteś tu pierwszy raz? W ten sposób założysz też konto.',

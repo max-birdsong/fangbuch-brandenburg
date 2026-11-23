@@ -6,12 +6,14 @@ import '@fontsource/figtree/600.css';
 import '@fontsource/figtree/700.css';
 import '@fontsource/figtree/800.css';
 import './styles.css';
-import { ConfirmProvider, LangProvider, useRoute } from './app';
+import { ConfirmProvider, LangProvider, useLang, useRoute } from './app';
 import { useSession } from './lib/auth';
 import { useProfile } from './lib/hooks';
 import { adoptSession, startAutoSync } from './lib/sync';
 import { loadWaters } from './lib/waters';
-import { isDemo, supabase } from './lib/supabase';
+import { isDemo, isTryMode, supabase } from './lib/supabase';
+import { exitDemo } from './lib/demo';
+import { seedDemo } from './lib/demoSeed';
 import { Welcome } from './screens/Welcome';
 import { SignIn } from './screens/SignIn';
 import { ProfileForm } from './screens/ProfileForm';
@@ -23,6 +25,17 @@ import { Privacy } from './screens/Privacy';
 import { Survey, SurveyThanks } from './screens/Survey';
 import { Admin } from './screens/Admin';
 import { TripForm } from './screens/TripForm';
+
+function DemoBar() {
+  const { t } = useLang();
+  if (!isTryMode) return null;
+  return (
+    <div className="demo-bar" role="status">
+      <span>{t('demoBar')}</span>
+      <button type="button" onClick={() => void exitDemo()}>{t('demoExit')}</button>
+    </div>
+  );
+}
 
 function Router() {
   const r = useRoute();
@@ -74,6 +87,7 @@ if (/(access_token|error_description|message)=/.test(location.hash)) {
 }
 
 registerSW({ immediate: true });
+if (isTryMode) void seedDemo();
 startAutoSync();
 // Fetch the water list right away (not only when a day is opened), so it is on the phone even if the
 // signal drops before the first fishing day is entered.
@@ -83,6 +97,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LangProvider>
       <ConfirmProvider>
+        <DemoBar />
         <Router />
       </ConfirmProvider>
     </LangProvider>

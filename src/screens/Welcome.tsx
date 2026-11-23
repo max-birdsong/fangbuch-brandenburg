@@ -1,5 +1,6 @@
 import { go, useLang } from '../app';
 import { isDemo } from '../lib/supabase';
+import { enterDemo } from '../lib/demo';
 import { LangSwitch } from '../components/LangSwitch';
 import { FundingLogos } from '../components/FundingLogos';
 import { Mark } from '../components/Mark';
@@ -30,6 +31,7 @@ export function Welcome() {
       <div className="stack">
         <button className="btn accent big" onClick={() => go(isDemo ? 'onboarding' : 'signin')}>{t('getStarted')}</button>
         {!isDemo && <p className="demo-note">{t('startHint')}</p>}
+        {!isDemo && <button type="button" className="link-light try-link" onClick={enterDemo}>{t('tryDemo')}</button>}
         {isDemo && <p className="demo-note">{t('demoMode')}</p>}
         <a className="link-light" href="#/privacy">{t('privacy')}</a>
       </div>
