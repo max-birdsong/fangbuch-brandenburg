@@ -53,6 +53,7 @@ export function Catches() {
 
   const nf = (v: number, d = 0) => v.toLocaleString(lang === 'en' ? 'en-GB' : lang === 'pl' ? 'pl-PL' : 'de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
   const months = Array.from({ length: 12 }, (_, m) => new Date(2026, m, 1).toLocaleDateString(lang === 'en' ? 'en-GB' : lang === 'pl' ? 'pl-PL' : 'de-DE', { month: 'short' }));
+  const daysTxt = (n: number) => (n === 1 ? t('daysFmt1') : t('daysFmt', { n }));
   const slotName = { morning: t('slotMorning'), day: t('slotDay'), evening: t('slotEvening'), night: t('slotNight') };
   const listed = trips.filter((tr) => season === 'all' || yearOf(tr) === season);
   const years = seasons(trips);
@@ -124,10 +125,10 @@ export function Catches() {
                   label={t('watersTitle')}
                   rows={st.byWater.slice(0, 6).map((w) => ({
                     key: w.water,
-                    label: `${localWaterName(w.water, lang)} (${t('daysFmt', { n: w.days })})`,
+                    label: `${localWaterName(w.water, lang)} (${daysTxt(w.days)})`,
                     value: w.perHour,
                     valueText: nf(w.perHour, 2),
-                    tip: <><strong>{localWaterName(w.water, lang)}</strong><br />{t('daysFmt', { n: w.days })} · {nf(w.hours, 1)} h · {w.fish} {t('statFish')}</>
+                    tip: <><strong>{localWaterName(w.water, lang)}</strong><br />{daysTxt(w.days)} · {nf(w.hours, 1)} h · {w.fish} {t('statFish')}</>
                   }))}
                 />
               </section>
@@ -140,7 +141,7 @@ export function Catches() {
                   label={t('timeTitle')}
                   rows={st.byTimeOfDay.map((s) => ({
                     key: s.slot,
-                    label: `${slotName[s.slot]} (${t('daysFmt', { n: s.days })})`,
+                    label: `${slotName[s.slot]} (${daysTxt(s.days)})`,
                     value: s.perHour ?? 0,
                     valueText: s.perHour === null ? '–' : nf(s.perHour, 2),
                     tip: <><strong>{slotName[s.slot]}</strong><br />{t('perHourFmt', { v: s.perHour === null ? '–' : nf(s.perHour, 2) })}</>

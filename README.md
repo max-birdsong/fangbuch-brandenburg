@@ -9,14 +9,18 @@ Status: **proof of concept / pilot**. Licensed to IfB, all rights reserved.
 ## What it does
 
 - Installable web app (PWA): works on any phone from the browser, can be added to the home screen, **works offline** at the water and syncs later.
-- No login needed to start. Anglers can later secure their log with an email address (sign-in link, no password), which also lets them restore it on a new phone.
+- Sign-up with email (sign-in link or code, no password) before the first entry; the same step restores the log on a new phone. No app stores: anglers add the website to their home screen (the app explains how).
+- At sign-up anglers choose what they want to be emailed about (study results, invitations to further IfB studies). Admins download the opt-in list from the dashboard.
 - One-time profile: years fishing, home postcode (no address), club membership and club name, Fischereischein, licenses.
 - One form per fishing day, filled in at the water or afterwards: water body, date and from–to time, method / shore or boat / target species, the catch, satisfaction 1 to 5. No catch = leave the catch list empty. Tapping a past day opens the same form to edit it.
 - Catch: each fish is entered on its own (species, length in cm or "not measured", released or kept). Many small fish of one species (bait fish, small whitefish) can be entered at once as a number, without length.
 - Optional baseline survey (age, avidity, centrality/attraction, motivations, catch orientation, Oder questions), offered after the first fishing day. Answers save as you go and can be resumed.
 - Water picker: nearest water via GPS (computed on the phone, coordinates are never stored), recently visited, search, by region, or free text.
 - German, English and Polish (Polish texts are a draft, to be checked by a native speaker). Polish phones start in Polish. Polish anglers see the PZW permit types first, and the border rivers as Odra / Nysa Łużycka.
-- Anglers can download their own data (CSV) and delete their account with all data.
+- Personal dashboard ("Statistik"): season numbers, personal records per species, fish per hour by month, by water and by time of day, totals for all participants (only shown from 5 anglers on) and what was caught recently.
+- Realistic size limits per species (`SPECIES_MAX_CM` in `src/data/catalog.ts`): unusually large fish need a second tap, impossible sizes are refused.
+- Anglers can download their own data (CSV) and delete their account with all data (everything is deleted). Accounts unused for `retention_years` (setting in the database, placeholder 3) are deleted automatically every night; their fishing data is kept only in anonymous archive tables.
+- Interreg funding line on the start screen and in the profile; the official logo file goes in `public/logos/`.
 
 ## Run it locally
 
@@ -127,4 +131,5 @@ scripts/              water import (OSM), starter list, icon generation
 - Check survey item wording against the original scales (`src/data/survey.ts`).
 - Minimum age and consent for under-16s (DSB).
 - Spatial units for the Oder and other large rivers.
-- Hosting long term (Supabase vs. IfB server) and domain.
+- Hosting: rented German server with self-hosted Supabase, see [docs/hosting.md](docs/hosting.md) (setup steps and timeline to the 1 May launch).
+- Retention period for automatic deletion (data protection officer).

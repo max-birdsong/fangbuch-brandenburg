@@ -1,6 +1,7 @@
 import { go, useLang } from '../app';
 import { isDemo } from '../lib/supabase';
 import { LangSwitch } from '../components/LangSwitch';
+import { FundingLogos } from '../components/FundingLogos';
 
 export function Welcome() {
   const { t } = useLang();
@@ -29,6 +30,7 @@ export function Welcome() {
         {isDemo && <p className="demo-note">{t('demoMode')}</p>}
         <a className="link-light" href="#/privacy">{t('privacy')}</a>
       </div>
+      <FundingLogos dark />
     </main>
   );
 }
