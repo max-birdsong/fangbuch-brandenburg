@@ -34,6 +34,11 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
   const box = useRef<HTMLDivElement>(null);
   const done = useRef(false); // a double tap on "Hinzufügen" must not add the fish twice
 
+  // On small phones the message can be below the fold: bring it into view.
+  useEffect(() => {
+    if (warn || err) box.current?.querySelector('.warn, .error')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [warn, err]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);

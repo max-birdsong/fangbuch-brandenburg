@@ -36,7 +36,8 @@ const licenseOrder = (country: Draft['homeCountry']) => {
 /** Onboarding (mode = 'onboarding') and later editing (mode = 'edit') share this form. */
 export function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
   const { t, lang } = useLang();
-  const [d, setD] = useState<Draft>(EMPTY);
+  // Polish-language phones most likely belong to anglers living in Poland.
+  const [d, setD] = useState<Draft>(() => ({ ...EMPTY, homeCountry: lang === 'pl' ? 'PL' : 'DE' }));
   const [consent, setConsent] = useState(false);
   const [existing, setExisting] = useState<Profile | null>(null);
   const [err, setErr] = useState<string | null>(null);
