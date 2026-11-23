@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLang } from '../app';
 import { Chips } from './ui';
-import { SPECIES, label } from '../data/catalog';
+import { SPECIES, SPECIES_MAX_CM, label } from '../data/catalog';
 
 /** One entry in the list: a single fish (count 1, optional length) or many small fish at once (count > 1, no length). */
 export type FishDraft = { key: string; species: string; count: number; cm: string; kept: boolean };
@@ -28,6 +28,9 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
   const [notMeasured, setNotMeasured] = useState(!!fish && fish.count === 1 && fish.cm.trim() === '');
   const [count, setCount] = useState(fish && fish.count > 1 ? String(fish.count) : '');
   const [err, setErr] = useState<string | null>(null);
+  // Unusually large fish: the angler confirms with a second tap (the value they confirmed).
+  const [bigOk, setBigOk] = useState<string | null>(null);
+  const [warn, setWarn] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const done = useRef(false); // a double tap on "Hinzufügen" must not add the fish twice
 
@@ -49,6 +52,13 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
     const len = bulk || notMeasured ? null : parseCm(cm);
     if (!bulk && !notMeasured && len === null) return setErr(t('lengthRequired'));
     if (len !== null && !(len > 0 && len < 400)) return setErr(t('lengthInvalid'));
+    const max = SPECIES_MAX_CM[species];
+    const name = label(SPECIES, species, lang);
+    if (len !== null && max && len > max * 1.5) return setErr(t('lengthImpossible', { species: name, max }));
+    if (len !== null && max && len > max && bigOk !== `${species}|${len}`) {
+      setBigOk(`${species}|${len}`);
+      return setWarn(t('lengthUnusual', { cm: String(len).replace('.', lang === 'en' ? '.' : ','), species: name, max }));
+    }
     if (kept === null) return setErr(t('pickFate'));
     done.current = true;
     onSave({ species, count: n, cm: bulk || notMeasured ? '' : cm.trim(), kept });
@@ -66,9 +76,9 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
             label={t('species')}
             options={chipCodes.map((c) => ({ code: c, label: label(SPECIES, c, lang) }))}
             value={species}
-            onChange={(v) => { setSpecies(v); setErr(null); }}
+            onChange={(v) => { setSpecies(v); setErr(null); setWarn(null); }}
           />
-          <select aria-label={t('chooseSpecies')} value="" onChange={(e) => { if (e.target.value) { setSpecies(e.target.value); setErr(null); } }}>
+          <select aria-label={t('chooseSpecies')} value="" onChange={(e) => { if (e.target.value) { setSpecies(e.target.value); setErr(null); setWarn(null); } }}>
             <option value="">{t('chooseSpecies')}</option>
             {others.map((s) => <option key={s.code} value={s.code}>{s[lang]}</option>)}
           </select>
@@ -88,7 +98,7 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
                 inputMode="decimal"
                 placeholder="cm"
                 value={cm}
-                onChange={(e) => { setCm(e.target.value); if (e.target.value.trim()) setNotMeasured(false); setErr(null); }}
+                onChange={(e) => { setCm(e.target.value); if (e.target.value.trim()) setNotMeasured(false); setErr(null); setWarn(null); }}
               />
             </label>
             <label className="check small">
@@ -106,6 +116,7 @@ export function FishSheet({ fish, suggestions, onSave, onDelete, onClose }: {
           </div>
         </div>
 
+        {warn && !err && <p className="warn" role="alert">{warn}</p>}
         {err && <p className="error" role="alert">{err}</p>}
 
         <div className="stack-sm">
