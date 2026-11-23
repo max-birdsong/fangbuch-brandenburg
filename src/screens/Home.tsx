@@ -1,6 +1,7 @@
 import { useLang } from '../app';
 import { BottomNav } from '../components/ui';
 import { TripCard } from '../components/TripCard';
+import { InstallCard } from '../components/InstallCard';
 import { useCatches, useKV, usePending, useSurvey, useSyncState, useTrips, summarize } from '../lib/hooks';
 import { SURVEY } from '../data/survey';
 import { setKV } from '../lib/db';
@@ -52,6 +53,8 @@ export function Home() {
             </div>
           </section>
         )}
+
+        {trips.length > 0 && <InstallCard />}
 
         <h2 className="section-title">{t('recentTrips')}</h2>
         {recent.length === 0 && <p className="muted">{t('noTripsYet')}</p>}

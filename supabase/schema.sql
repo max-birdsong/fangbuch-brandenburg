@@ -389,3 +389,41 @@ select 'archived', c.id, c.trip_id, c.archive_id, c.species, c.count, c.length_c
 from public.archive_catches c join public.archive_trips t on t.id = c.trip_id;
 
 revoke all on public.export_trips_all, public.export_catches_all from anon, authenticated;
+
+-- ---------------------------------------------------------------- community numbers for anglers
+-- Totals for all participants in a season, shown on every angler's personal dashboard. Returns only
+-- aggregates, and nothing beyond the number of anglers while fewer than 5 took part (privacy).
+create or replace function public.community_stats(season integer) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare
+  n int;
+  res jsonb;
+begin
+  select count(distinct user_id) into n from public.trips
+  where not deleted and extract(year from started_at) = season;
+  if n < 5 then
+    return jsonb_build_object('enough', false, 'anglers', n);
+  end if;
+  with t as (
+    select * from public.trips where not deleted and extract(year from started_at) = season
+  ), c as (
+    select c.* from public.catches c join t on t.id = c.trip_id where not c.deleted
+  ), per_trip as (
+    select t.id, coalesce(sum(c.count), 0) as fish from t left join c on c.trip_id = t.id group by t.id
+  )
+  select jsonb_build_object(
+    'enough', true,
+    'anglers', n,
+    'days', (select count(*) from t),
+    'hours', (select coalesce(round(sum(extract(epoch from (ended_at - started_at)) / 3600.0)::numeric, 1), 0) from t where ended_at is not null),
+    'fish', (select coalesce(sum(count), 0) from c),
+    'zeroDays', (select count(*) from per_trip where fish = 0),
+    'species', coalesce((select jsonb_object_agg(species, k) from (select species, sum(count) k from c group by species order by k desc limit 8) s), '{}'::jsonb),
+    'recentSpecies', coalesce((select jsonb_object_agg(species, k) from (
+        select c.species, sum(c.count) k from c join t on t.id = c.trip_id
+        where t.started_at > now() - interval '30 days' group by c.species order by k desc limit 6) s), '{}'::jsonb)
+  ) into res;
+  return res;
+end $$;
+revoke all on function public.community_stats(integer) from public, anon;
+grant execute on function public.community_stats(integer) to authenticated;
