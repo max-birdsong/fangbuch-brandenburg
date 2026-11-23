@@ -1,3 +1,4 @@
+import { FundingLogos } from '../components/FundingLogos';
 import { useState } from 'react';
 import { go, useConfirm, useLang } from '../app';
 import { BottomNav } from '../components/ui';
@@ -130,6 +131,7 @@ export function Profile() {
           <span className="muted small">{t('aboutText')}</span>
           <span className="muted small">{t('osm')}</span>
           <span className="muted small">{t('version')} {__APP_VERSION__}</span>
+          <FundingLogos />
         </div>
 
         {!isDemo && session && !isAnon && <button className="btn secondary" onClick={() => void doSignOut()}>{t('signOut')}</button>}

@@ -326,3 +326,10 @@ input.fish-len { width: 120px; }
 .kpis.small dd { font-size: 20px; }
 .community { background: linear-gradient(180deg, #EEF6F7, var(--card)); }
 .contrib { border-left: 4px solid #5FA8B3; }
+
+/* Funding line with the Interreg logo (logo file in public/logos/) */
+.funding { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin-top: 8px; }
+.funding img { max-width: 220px; max-height: 56px; background: #fff; padding: 6px 8px; border-radius: 6px; }
+.funding-text { margin: 0; font-size: 12px; color: var(--muted); }
+.funding.on-dark { align-items: center; text-align: center; margin-top: 18px; }
+.funding.on-dark .funding-text { color: rgba(255,255,255,.75); }
