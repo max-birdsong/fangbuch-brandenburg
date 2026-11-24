@@ -164,7 +164,8 @@ export function TripForm({ id }: { id?: string }) {
     if (water.waterId) await rememberWater(water.waterId);
     if (!id) await setKV(DRAFT_KEY, null);
     scheduleSync();
-    go('', true);
+    // A new day gets the "what this day added" screen; edits go straight back.
+    go(id ? '' : `saved/${tripId}`, true);
   };
 
   const remove = async () => {

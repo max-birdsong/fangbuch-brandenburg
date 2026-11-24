@@ -6,7 +6,9 @@ import { Columns, HBars } from '../components/charts';
 import { SPECIES, label } from '../data/catalog';
 import { getKV, setKV } from '../lib/db';
 import { useCatches, useOnline, useTrips } from '../lib/hooks';
-import { personalStats, seasons, yearOf, type CommunityStats } from '../lib/personalStats';
+import { personalStats, seasons, speciesCollection, yearOf, type CommunityStats } from '../lib/personalStats';
+import { BitingCard } from '../components/BitingCard';
+import { useWaterStats } from '../lib/biting';
 import { supabase } from '../lib/supabase';
 import { fmtDateShort } from '../lib/util';
 import { localWaterName } from '../lib/waterNames';
@@ -25,6 +27,7 @@ export function Catches() {
   const [season, setSeason] = useState<number | 'all'>(new Date().getFullYear());
   const [shown, setShown] = useState(PAGE);
   const [community, setCommunity] = useState<CommunityStats | null>(null);
+  const water = useWaterStats();
 
   // Community numbers: last known value from the phone first, then fresh from the server.
   const commYear = season === 'all' ? new Date().getFullYear() : season;
@@ -49,7 +52,8 @@ export function Catches() {
     return m;
   }, [catches]);
   const st = useMemo(() => (trips && catches ? personalStats(trips, catches, season) : null), [trips, catches, season]);
-  if (!trips || !catches || !st) return <main className="screen with-nav" />;
+  const coll = useMemo(() => (trips && catches ? speciesCollection(trips, catches, SPECIES.map((s) => s.code)) : null), [trips, catches]);
+  if (!trips || !catches || !st || !coll) return <main className="screen with-nav" />;
 
   const nf = (v: number, d = 0) => v.toLocaleString(lang === 'en' ? 'en-GB' : lang === 'pl' ? 'pl-PL' : 'de-DE', { minimumFractionDigits: d, maximumFractionDigits: d });
   const months = Array.from({ length: 12 }, (_, m) => new Date(2026, m, 1).toLocaleDateString(lang === 'en' ? 'en-GB' : lang === 'pl' ? 'pl-PL' : 'de-DE', { month: 'short' }));
@@ -85,6 +89,29 @@ export function Catches() {
               <div><dt>{t('statSpecies')}</dt><dd>{nf(st.speciesCount)}</dd></div>
               <div><dt>{t('statZero')}</dt><dd>{nf(st.zeroDays)}</dd></div>
             </dl>
+
+            <section className="card stack-sm collection" aria-labelledby="coll-title">
+              <div className="row between baseline gap">
+                <h2 id="coll-title" className="viz-title">{t('collTitle')}</h2>
+                <span className="coll-count">{t('collCount', { n: coll.caught.length, total: coll.total })}</span>
+              </div>
+              <div className="coll-bar" aria-hidden="true">
+                {Array.from({ length: coll.total }, (_, i) => <span key={i} className={i < coll.caught.length ? 'on' : ''} />)}
+              </div>
+              {coll.caught.length === 0 ? (
+                <p className="muted small">{t('collEmpty')}</p>
+              ) : (
+                <>
+                  <ul className="coll-chips" aria-label={t('collCaught')}>
+                    {coll.caught.map((c) => <li key={c.species}>{label(SPECIES, c.species, lang)}</li>)}
+                  </ul>
+                  <p className="muted small">{t('collLast', { species: label(SPECIES, coll.caught[coll.caught.length - 1].species, lang), date: fmtDateShort(coll.caught[coll.caught.length - 1].date, lang) })}</p>
+                </>
+              )}
+              {coll.missing.length > 0 && (
+                <p className="small"><span className="strong">{t('collNext')}</span> {coll.missing.slice(0, 6).map((c) => label(SPECIES, c, lang)).join(', ')}{coll.missing.length > 6 ? ' …' : ''}</p>
+              )}
+            </section>
 
             <section className="card stack-sm">
               <h2 className="viz-title">{t('recordsTitle')}</h2>
@@ -151,6 +178,8 @@ export function Catches() {
             )}
           </>
         )}
+
+        <BitingCard stats={water} />
 
         {supabase && (
           <section className="card stack-sm community">

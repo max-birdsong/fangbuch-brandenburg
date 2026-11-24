@@ -13,25 +13,34 @@ export function exampleData(): AdminData {
     ['werbellinsee', 'Werbellinsee', 0.3], ['spree-bei-cottbus', 'Spree bei Cottbus', 0.45], ['parsteiner-see', 'Parsteiner See', 0.25]
   ];
   const species = ['zander', 'pike', 'perch', 'perch', 'roach', 'bream', 'asp', 'eel', 'wels', 'ide', 'tench', 'round_goby'];
-  const anglers = Array.from({ length: 24 }, (_, i) => `example-${i + 1}`);
+  // 40 sign-ups with realistic drop-off: some never log, many stop after a few days, a keen core stays.
+  const anglers = Array.from({ length: 40 }, (_, i) => `example-${i + 1}`);
   const trips: ATrip[] = [];
   const catches: ACatch[] = [];
   const now = Date.now();
-  for (let i = 0; i < 180; i++) {
-    const [waterId, waterName, rate] = pick(waters);
-    const start = new Date(now - Math.floor(rnd() * 150) * 86_400_000);
-    start.setHours(5 + Math.floor(rnd() * 12), 0, 0, 0);
-    const hours = 1.5 + rnd() * 5;
-    const id = `example-trip-${i}`;
-    trips.push({
-      id, userId: pick(anglers), waterId, waterName, startedAt: start.toISOString(),
-      endedAt: new Date(start.getTime() + hours * 3_600_000).toISOString(),
-      method: pick(['spin', 'bottom', 'float', 'feeder']), platform: pick(['shore', 'shore', 'boat']),
-      satisfaction: 1 + Math.floor(rnd() * 5), loggedLive: rnd() < 0.8
-    });
-    const n = Math.floor(rnd() * rate * hours * 1.6);
-    for (let j = 0; j < n; j++) {
-      catches.push({ tripId: id, species: pick(species), count: rnd() < 0.15 ? 2 + Math.floor(rnd() * 6) : 1, lengthCm: 20 + Math.floor(rnd() * 50), kept: rnd() < 0.3 });
+  let i = 0;
+  for (const userId of anglers) {
+    const r = rnd();
+    const nDays = r < 0.25 ? 0 : r < 0.5 ? 1 + Math.floor(rnd() * 2) : r < 0.8 ? 3 + Math.floor(rnd() * 6) : 10 + Math.floor(rnd() * 20);
+    const joined = Math.floor(rnd() * 300); // days ago
+    const span = nDays <= 2 ? 14 : nDays < 10 ? 90 : joined; // how long they keep logging
+    for (let k = 0; k < nDays; k++) {
+      const [waterId, waterName, rate] = pick(waters);
+      const ago = Math.max(0, joined - Math.floor(rnd() * Math.min(span, joined + 1)));
+      const start = new Date(now - ago * 86_400_000);
+      start.setHours(5 + Math.floor(rnd() * 12), 0, 0, 0);
+      const hours = 1.5 + rnd() * 5;
+      const id = `example-trip-${i++}`;
+      trips.push({
+        id, userId, waterId, waterName, startedAt: start.toISOString(),
+        endedAt: new Date(start.getTime() + hours * 3_600_000).toISOString(),
+        method: pick(['spin', 'bottom', 'float', 'feeder']), platform: pick(['shore', 'shore', 'boat']),
+        satisfaction: 1 + Math.floor(rnd() * 5), loggedLive: rnd() < 0.8
+      });
+      const n = Math.floor(rnd() * rate * hours * 1.6);
+      for (let j = 0; j < n; j++) {
+        catches.push({ tripId: id, species: pick(species), count: rnd() < 0.15 ? 2 + Math.floor(rnd() * 6) : 1, lengthCm: 20 + Math.floor(rnd() * 50), kept: rnd() < 0.3 });
+      }
     }
   }
   const items = allItems();

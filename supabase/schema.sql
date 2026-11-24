@@ -427,3 +427,47 @@ begin
 end $$;
 revoke all on function public.community_stats(integer) from public, anon;
 grant execute on function public.community_stats(integer) to authenticated;
+
+-- ---------------------------------------------------------------- what's biting (water x month)
+-- Catch rates per water and month, pooled from all participants, for the "Was gerade beißt" card.
+-- A water-month is only returned when at least 5 different anglers fished it, so no one's spots or
+-- personal catches can be read from it. All Oder sections are also pooled into one "Oder" row.
+-- Safe to re-run.
+create or replace function public.water_stats(season integer) returns jsonb
+language sql stable security definer set search_path = public as $$
+  with base as (
+    select id, user_id, water_id, water_name, started_at, ended_at
+    from public.trips
+    where not deleted and ended_at is not null and water_id is not null
+      and extract(year from started_at) = season
+  ), t as (
+    select id, user_id, water_id as wid, water_name as wname,
+           extract(month from started_at)::int as m,
+           extract(epoch from (ended_at - started_at)) / 3600.0 as h
+    from base
+    union all
+    select id, user_id, 'oder', 'Oder', extract(month from started_at)::int,
+           extract(epoch from (ended_at - started_at)) / 3600.0
+    from base where water_id like 'oder-bei-%'
+  ), g as (
+    select wid, m, min(wname) as wname, count(distinct user_id) as anglers, count(*) as days, sum(h) as hours
+    from t group by wid, m
+    having count(distinct user_id) >= 5
+  ), f as (
+    select t.wid, t.m, c.species, sum(c.count) as n
+    from t
+    join g on g.wid = t.wid and g.m = t.m
+    join public.catches c on c.trip_id = t.id and not c.deleted
+    group by t.wid, t.m, c.species
+  )
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'waterId', g.wid, 'water', g.wname, 'month', g.m, 'anglers', g.anglers, 'days', g.days,
+    'hours', round(g.hours::numeric, 1),
+    'fish', coalesce((select sum(n) from f where f.wid = g.wid and f.m = g.m), 0),
+    'species', coalesce((select jsonb_object_agg(species, n) from (
+        select species, n from f where f.wid = g.wid and f.m = g.m order by n desc limit 5) s), '{}'::jsonb)
+  )), '[]'::jsonb)
+  from g;
+$$;
+revoke all on function public.water_stats(integer) from public, anon;
+grant execute on function public.water_stats(integer) to authenticated;
