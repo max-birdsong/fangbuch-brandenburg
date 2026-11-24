@@ -80,6 +80,7 @@ button, input, select { font: inherit; color: inherit; }
 .hint { font-size: 14px; color: var(--muted); }
 .error { color: var(--danger); font-weight: 600; }
 .kicker { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-light); }
+.kicker.inst { text-transform: none; letter-spacing: 0.02em; font-size: 14px; }
 .kicker.dark { color: var(--muted); letter-spacing: 0.02em; text-transform: none; font-weight: 600; }
 
 /* Buttons */
