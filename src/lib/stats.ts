@@ -140,3 +140,50 @@ export function surveyWide(d: AdminData) {
     return row;
   });
 }
+
+/**
+ * Who keeps logging. Sign-ups are profiles; "days" are fishing days per angler.
+ * - funnel: share of sign-ups with at least 1, 5 and 10 fishing days
+ * - activeRecent: anglers with a day in the last 30 days (share of those who ever logged)
+ * - after3m: of anglers whose first day is at least 90 days ago, the share who logged again 90+ days later
+ * - monthly: anglers with at least one day per month, last 12 months
+ */
+export function retention(d: AdminData, now = Date.now()) {
+  const byAngler = new Map<string, number[]>();
+  for (const t of d.trips) byAngler.set(t.userId, [...(byAngler.get(t.userId) ?? []), new Date(t.startedAt).getTime()]);
+  const signups = new Set([...d.profiles.map((p) => p.userId), ...byAngler.keys()]).size;
+  const counts = [...byAngler.values()].map((ts) => ts.length);
+  const atLeast = (n: number) => counts.filter((c) => c >= n).length;
+  const DAY = 86_400_000;
+  const loggers = byAngler.size;
+  const activeRecent = [...byAngler.values()].filter((ts) => ts.some((x) => now - x <= 30 * DAY)).length;
+  let eligible = 0;
+  let stayed = 0;
+  for (const ts of byAngler.values()) {
+    const first = Math.min(...ts);
+    if (now - first < 90 * DAY) continue;
+    eligible++;
+    if (ts.some((x) => x - first >= 90 * DAY)) stayed++;
+  }
+  const monthly: { month: string; anglers: number }[] = [];
+  const base = new Date(now);
+  for (let i = 11; i >= 0; i--) {
+    const m = new Date(base.getFullYear(), base.getMonth() - i, 1);
+    const key = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
+    const who = new Set(d.trips.filter((t) => t.startedAt.slice(0, 7) === key).map((t) => t.userId));
+    monthly.push({ month: key, anglers: who.size });
+  }
+  const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
+  return {
+    signups,
+    funnel: [
+      { key: 'signup', n: signups, pct: signups ? 100 : null },
+      { key: 'd1', n: atLeast(1), pct: pct(atLeast(1), signups) },
+      { key: 'd5', n: atLeast(5), pct: pct(atLeast(5), signups) },
+      { key: 'd10', n: atLeast(10), pct: pct(atLeast(10), signups) }
+    ],
+    activeRecent, activeRecentPct: pct(activeRecent, loggers),
+    after3m: { eligible, stayed, pct: pct(stayed, eligible) },
+    monthly
+  };
+}

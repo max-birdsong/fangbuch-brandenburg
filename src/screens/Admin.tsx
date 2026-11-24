@@ -4,7 +4,7 @@ import { TopBar } from '../components/ui';
 import { ChartCard, Columns, DataTable, DotScale, HBars, StackedHBars } from '../components/charts';
 import { loadAdminData, type AdminData } from '../lib/admin';
 import { exampleData } from '../lib/demoData';
-import { byWater, bySpecies, hoursOf, kpis, surveyMotives, surveyScales, surveyWide, weekly } from '../lib/stats';
+import { byWater, bySpecies, hoursOf, kpis, retention, surveyMotives, surveyScales, surveyWide, weekly } from '../lib/stats';
 import { downloadText, toCSV } from '../lib/util';
 import { supabase } from '../lib/supabase';
 
@@ -48,6 +48,8 @@ export function Admin() {
   }
 
   const k = kpis(data);
+  const ret = retention(data);
+  const funnelLabel = { signup: L('Angemeldet', 'Signed up'), d1: L('Mind. 1 Angeltag', 'At least 1 day'), d5: L('Mind. 5 Angeltage', 'At least 5 days'), d10: L('Mind. 10 Angeltage', 'At least 10 days') };
   const weeks = weekly(data);
   const minDays = data.source === 'all' ? 3 : 1;
   const waters = byWater(data, minDays).slice(0, 12);
@@ -112,6 +114,35 @@ export function Admin() {
           <div><dt>{L('Tage ohne Fang', 'Days without catch')}</dt><dd>{k.zeroPct === null ? '–' : `${k.zeroPct} %`}</dd></div>
           <div><dt>{L('Umfragen abgeschlossen', 'Surveys completed')}</dt><dd>{nf(k.surveysDone)}</dd></div>
         </dl>
+
+        <ChartCard
+          title={L('Dranbleiben', 'Retention')}
+          subtitle={L('Wie viele der Angemeldeten tragen ein, und wie lange?', 'How many sign-ups log fishing days, and for how long?')}
+          table={<DataTable
+            head={[L('Stufe', 'Step'), L('Angler', 'Anglers'), L('Anteil', 'Share')]}
+            rows={[
+              ...ret.funnel.map((f) => [funnelLabel[f.key as keyof typeof funnelLabel], f.n, f.pct === null ? '–' : `${f.pct} %`]),
+              [L('Aktiv in den letzten 30 Tagen', 'Active in the last 30 days'), ret.activeRecent, ret.activeRecentPct === null ? '–' : `${ret.activeRecentPct} %`],
+              [L('Nach 3 Monaten noch dabei', 'Still logging after 3 months'), `${ret.after3m.stayed} / ${ret.after3m.eligible}`, ret.after3m.pct === null ? '–' : `${ret.after3m.pct} %`]
+            ]}
+          />}
+        >
+          <HBars
+            label={L('Anteil der Angemeldeten', 'Share of sign-ups')}
+            rows={ret.funnel.map((f) => ({ key: f.key, label: `${funnelLabel[f.key as keyof typeof funnelLabel]} (${f.n})`, value: f.pct ?? 0, valueText: f.pct === null ? '–' : `${f.pct} %`, tip: <><strong>{funnelLabel[f.key as keyof typeof funnelLabel]}</strong><br />{f.n} {L('Angler', 'anglers')}</> }))}
+          />
+          <dl className="kpis small">
+            <div><dt>{L('Aktiv, letzte 30 Tage', 'Active, last 30 days')}</dt><dd>{ret.activeRecentPct === null ? '–' : `${ret.activeRecentPct} %`}</dd></div>
+            <div><dt>{L('Nach 3 Monaten noch dabei', 'Still logging after 3 months')}</dt><dd>{ret.after3m.pct === null ? '–' : `${ret.after3m.pct} %`}</dd></div>
+          </dl>
+          <p className="muted small">{L('Aktiv: Anteil derer, die je eingetragen haben. 3 Monate: von allen, deren erster Angeltag mindestens 90 Tage her ist, wer 90 Tage oder später noch einen Tag eingetragen hat.', 'Active: share of those who ever logged. 3 months: of everyone whose first day is at least 90 days ago, who logged a day 90 or more days later.')}</p>
+          <h3 className="sub-label">{L('Aktive Angler pro Monat', 'Active anglers per month')}</h3>
+          <Columns
+            label={L('Aktive Angler pro Monat', 'Active anglers per month')}
+            data={ret.monthly.map((m) => ({ x: m.month, xLabel: new Date(`${m.month}-01`).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-GB', { month: 'short' }), value: m.anglers }))}
+            valueLabel={(v) => `${v} ${L('Angler', 'anglers')}`}
+          />
+        </ChartCard>
 
         {k.days === 0 ? (
           <p className="muted">{L('Noch keine abgeschlossenen Angeltage.', 'No finished fishing days yet.')}</p>

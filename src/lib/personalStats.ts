@@ -152,3 +152,56 @@ export interface CommunityStats {
   recentSpecies?: Record<string, number>; // last 30 days
   fetchedAt?: number;
 }
+
+/** Species that count for the collection: every listed species except "other". */
+export const collectableSpecies = (codes: string[]) => codes.filter((c) => c !== 'other');
+
+/** The angler's species collection over all years: each species with the day it was first caught. */
+export function speciesCollection(allTrips: Trip[], allCatches: Catch[], codes: string[]) {
+  const valid = new Set(collectableSpecies(codes));
+  const tripById = new Map(allTrips.filter((t) => !t.deleted).map((t) => [t.id, t]));
+  const first = new Map<string, string>();
+  for (const c of allCatches) {
+    if (c.deleted || !valid.has(c.species)) continue;
+    const t = tripById.get(c.tripId);
+    if (!t) continue;
+    const cur = first.get(c.species);
+    if (!cur || t.startedAt < cur) first.set(c.species, t.startedAt);
+  }
+  const caught = [...first.entries()].map(([species, date]) => ({ species, date })).sort((a, b) => a.date.localeCompare(b.date));
+  return { caught, total: valid.size, missing: collectableSpecies(codes).filter((c) => !first.has(c)) };
+}
+
+/**
+ * What one saved fishing day added: its number in the season, species new to the collection and new
+ * personal records (compared with all other days).
+ */
+export function dayHighlights(allTrips: Trip[], allCatches: Catch[], tripId: string, codes: string[]) {
+  const trip = allTrips.find((t) => t.id === tripId && !t.deleted);
+  if (!trip) return null;
+  const others = allTrips.filter((t) => !t.deleted && t.id !== tripId);
+  const otherIds = new Set(others.map((t) => t.id));
+  const mine = allCatches.filter((c) => !c.deleted && c.tripId === tripId);
+  const before = allCatches.filter((c) => !c.deleted && otherIds.has(c.tripId));
+  const valid = new Set(collectableSpecies(codes));
+  const seen = new Set(before.map((c) => c.species));
+  const newSpecies = [...new Set(mine.map((c) => c.species))].filter((s) => valid.has(s) && !seen.has(s));
+  const bestBefore = new Map<string, number>();
+  for (const c of before) if (c.lengthCm !== null && c.count === 1) bestBefore.set(c.species, Math.max(bestBefore.get(c.species) ?? 0, c.lengthCm));
+  const recs = new Map<string, number>();
+  for (const c of mine) {
+    if (c.lengthCm === null || c.count !== 1) continue;
+    const prev = bestBefore.get(c.species);
+    if (prev !== undefined && c.lengthCm > prev && c.lengthCm > (recs.get(c.species) ?? 0)) recs.set(c.species, c.lengthCm);
+  }
+  const year = yearOf(trip);
+  const dayNo = allTrips.filter((t) => !t.deleted && yearOf(t) === year && t.startedAt <= trip.startedAt).length;
+  const fish = mine.reduce((s, c) => s + c.count, 0);
+  return {
+    trip, year, dayNo, fish, hours: hoursOf(trip),
+    newSpecies,
+    records: [...recs.entries()].map(([species, cm]) => ({ species, cm, previous: bestBefore.get(species)! })),
+    collectionSize: new Set([...seen, ...mine.map((c) => c.species)].filter((s) => valid.has(s))).size,
+    collectionTotal: valid.size
+  };
+}

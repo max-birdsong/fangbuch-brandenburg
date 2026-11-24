@@ -25,6 +25,7 @@ import { Privacy } from './screens/Privacy';
 import { Survey, SurveyThanks } from './screens/Survey';
 import { Admin } from './screens/Admin';
 import { TripForm } from './screens/TripForm';
+import { Saved } from './screens/Saved';
 
 function DemoBar() {
   const { t } = useLang();
@@ -63,6 +64,8 @@ function Router() {
       return <TripForm key="new" />;
     case 'trip':
       return <TripForm key={r[1]} id={r[1]} />;
+    case 'saved':
+      return <Saved tripId={r[1]} />;
     case 'catches':
       return <Catches />;
     case 'profile':

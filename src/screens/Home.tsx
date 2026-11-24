@@ -6,6 +6,8 @@ import { useCatches, useKV, usePending, useSurvey, useSyncState, useTrips, summa
 import { SURVEY } from '../data/survey';
 import { setKV } from '../lib/db';
 import { isDemo } from '../lib/supabase';
+import { BitingCard } from '../components/BitingCard';
+import { useWaterStats } from '../lib/biting';
 
 export function Home() {
   const { t } = useLang();
@@ -15,6 +17,7 @@ export function Home() {
   const sync = useSyncState();
   const survey = useSurvey();
   const snoozedUntil = useKV<number>('surveySnoozedUntil', 0);
+  const water = useWaterStats();
   if (!trips || !catches || survey === undefined) return <main className="screen" />;
 
   const year = new Date().getFullYear();
@@ -53,6 +56,8 @@ export function Home() {
             </div>
           </section>
         )}
+
+        <BitingCard stats={water} compact />
 
         {trips.length > 0 && <InstallCard />}
 
