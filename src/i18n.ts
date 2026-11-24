@@ -1,7 +1,7 @@
 import type { Lang } from './data/catalog';
 
 const de = {
-  institute: 'Institut für Binnenfischerei',
+  institute: 'Institut für Binnenfischerei e.V. Potsdam-Sacrow',
   welcomeTitle: 'Captura',
   welcomeTitle2: 'Fangbuch',
   welcomeIntro: 'Dein persönliches Fangbuch für Flüsse und Seen in Brandenburg und Westpolen. Jeder Eintrag hilft der Fischereiforschung, auch Tage ohne Fang.',
@@ -48,7 +48,7 @@ const de = {
   qLicenses: 'Welche Angelkarten hast du dieses Jahr?',
   multiple: 'mehrere möglich',
   licensesOther: 'Welche andere Karte?',
-  consent: 'Ich stimme zu, dass meine Angaben und Fangeinträge vom Institut für Binnenfischerei für die Fischereiforschung gespeichert und ausgewertet werden.',
+  consent: 'Ich stimme zu, dass meine Angaben und Fangeinträge vom Institut für Binnenfischerei e.V. Potsdam-Sacrow für die Fischereiforschung gespeichert und ausgewertet werden.',
   privacy: 'Datenschutz',
   onbNext: 'Weiter zum Fangbuch',
   qContact: 'Möchtest du per E-Mail informiert werden über …',
@@ -237,7 +237,7 @@ const de = {
 export type StringKey = keyof typeof de;
 
 const en: Record<StringKey, string> = {
-  institute: 'Institute of Inland Fisheries',
+  institute: 'Institute of Inland Fisheries e.V. Potsdam-Sacrow',
   welcomeTitle: 'Captura',
   welcomeTitle2: 'Catch log',
   welcomeIntro: 'Your personal fishing log for rivers and lakes in Brandenburg and western Poland. Every entry helps fisheries research, including days without a catch.',
@@ -284,7 +284,7 @@ const en: Record<StringKey, string> = {
   qLicenses: 'Which fishing licenses do you have this year?',
   multiple: 'choose any',
   licensesOther: 'Which other license?',
-  consent: 'I agree that my information and catch entries are stored and analysed by the Institute of Inland Fisheries for fisheries research.',
+  consent: 'I agree that my information and catch entries are stored and analysed by the Institute of Inland Fisheries e.V. Potsdam-Sacrow for fisheries research.',
   privacy: 'Privacy',
   onbNext: 'Continue to my log',
   qContact: 'Would you like to receive emails about …',
@@ -473,7 +473,7 @@ const en: Record<StringKey, string> = {
 // Polish: draft translation, to be checked by a native speaker (Ania?) before Polish anglers use it.
 // Informal "Ty" as in the German "du". Counts avoid Polish plural forms ("ryby: 5", "5 szt.").
 const pl: Record<StringKey, string> = {
-  institute: 'Institut für Binnenfischerei',
+  institute: 'Institut für Binnenfischerei e.V. Potsdam-Sacrow',
   welcomeTitle: 'Captura',
   welcomeTitle2: 'Dziennik połowów',
   welcomeIntro: 'Twój osobisty dziennik połowów dla rzek i jezior Brandenburgii i zachodniej Polski. Każdy wpis pomaga badaniom rybackim, także dni bez ryby.',
@@ -520,7 +520,7 @@ const pl: Record<StringKey, string> = {
   qLicenses: 'Jakie zezwolenia na wędkowanie masz w tym roku?',
   multiple: 'można wybrać kilka',
   licensesOther: 'Jakie inne zezwolenie?',
-  consent: 'Wyrażam zgodę na przechowywanie i analizowanie moich danych i wpisów o połowach przez Institut für Binnenfischerei do celów badań rybackich.',
+  consent: 'Wyrażam zgodę na przechowywanie i analizowanie moich danych i wpisów o połowach przez Institut für Binnenfischerei e.V. Potsdam-Sacrow do celów badań rybackich.',
   privacy: 'Ochrona danych',
   onbNext: 'Dalej do dziennika',
   qContact: 'Czy chcesz otrzymywać e-mailem informacje o …',

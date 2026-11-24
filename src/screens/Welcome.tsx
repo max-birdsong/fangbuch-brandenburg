@@ -13,7 +13,7 @@ export function Welcome() {
         <div className="row end">
           <LangSwitch dark />
         </div>
-        <p className="kicker">{t('institute')}</p>
+        <p className="kicker inst">{t('institute')}</p>
         <div className="brand">
           <Mark size={68} />
           <h1 className="display">
