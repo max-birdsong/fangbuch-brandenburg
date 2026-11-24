@@ -1,10 +1,12 @@
 import { StrictMode, useEffect } from 'react';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-sans/700.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
-import '@fontsource/figtree/400.css';
-import '@fontsource/figtree/600.css';
-import '@fontsource/figtree/700.css';
-import '@fontsource/figtree/800.css';
 import './styles.css';
 import { ConfirmProvider, LangProvider, useLang, useRoute } from './app';
 import { useSession } from './lib/auth';
